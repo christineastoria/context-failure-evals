@@ -4,6 +4,10 @@
 
 
 ## Context Management Patterns
+Context engineering is controlling what makes it into your prompt, and managing context incorrectly can lead to bugs and unexpected behaviors. The aim of this notebook is to demonstrate four common context management pitfalls, and how to use LangSmith to evaluate, iterate, and develop better strategies for context management to build more reliable agents. 
+<img width="857" height="386" alt="Screenshot 2025-12-20 at 8 27 22 AM" src="https://github.com/user-attachments/assets/dab73fd5-bb04-4257-972f-cc7c31e663b1" />
+
+
 
 ### 1. Context Confusion
 
@@ -19,23 +23,30 @@ Three problems measured with **trajectory-based evaluation**:
 2. **Irrelevant Noise** - Unrelated tools distract even at moderate counts  
 3. **Instruction Bloat** - Verbose multi-domain instructions reduce focus
 
-## Evaluators
+## Evaluators in LangSmith
 
 - **Trajectory Match**: Do tool calls match expected tools?
 - **Correctness** (openevals): Is the response accurate?
 - **LLM Trajectory Judge**: Are tool calls appropriate?
 - **Tool Efficiency**: Ratio of expected/actual tool calls
 
+## Solutions demonstrated
+- **Context compression** via tool consolitation and pruning
+- **Context selection** via prompt routing
 
-### 2. [Pattern Name TBD]
+
+### 2. [TODO: Context Distraction]
 
 - 
 
-### 3. [Pattern Name TBD]
+### 3. [TODO: Context Clash]
 
 - 
 
-### 4. [Pattern Name TBD]
+### 4. [TODO: Context Poisoning]
+
+
+### 5. [TODO: Context Isolation]
 
 -
 
