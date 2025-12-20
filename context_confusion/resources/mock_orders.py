@@ -166,6 +166,30 @@ ORDERS = {
         "shipping_method": "return",
         "insurance_value": 25.00,
         "signature_required": False
+    },
+    "12345": {
+        "order_id": "12345",
+        "customer_id": "cust_222",
+        "status": "IN_TRANSIT",
+        "order_date": "2025-12-17T10:00:00Z",
+        "last_update": "2025-12-19T14:30:00Z",
+        "tracking_number": "TRK12345ABC",
+        "carrier": "FedEx",
+        "total_cents": 5499,
+        "currency": "USD",
+        "items": [
+            {
+                "sku": "SKU-888",
+                "name": "Standard Widget",
+                "qty": 1,
+                "price_cents": 5499
+            }
+        ],
+        "origin_warehouse": "WH-01",
+        "destination_warehouse": None,
+        "shipping_method": "standard",
+        "insurance_value": 60.00,
+        "signature_required": False
     }
 }
 
@@ -260,6 +284,19 @@ SHIPMENTS = {
         "weight_lbs": 1.2,
         "dimensions": "6x6x4",
         "delivery_attempts": 3
+    },
+    "12345": {
+        "order_id": "12345",
+        "carrier": "FedEx",
+        "service_level": "Standard",
+        "eta_date": "2025-12-21",
+        "original_eta": "2025-12-21",
+        "latest_scan": "In transit",
+        "scan_location": "Memphis, TN",
+        "scan_timestamp": "2025-12-19T14:30:00Z",
+        "weight_lbs": 3.2,
+        "dimensions": "10x8x6",
+        "delivery_attempts": 0
     }
 }
 

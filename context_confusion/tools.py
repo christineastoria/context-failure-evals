@@ -874,17 +874,58 @@ insurance_tools = [
 def get_order_summary(order_id: str) -> Dict[str, Any]:
     """Get comprehensive order summary including all status and tracking details."""
     oid = order_id.strip().lstrip("#")
-    return {"ok": True, "data": {"note": "This is a duplicate of get_order - use get_order instead", "order_id": oid}}
+    if oid not in ORDERS:
+        return {"ok": False, "error": f"Order not found: {oid}"}
+    
+    order = ORDERS[oid]
+    # INCOMPLETE: Only basic order info, missing tracking number and carrier details
+    return {
+        "ok": True,
+        "data": {
+            "order_id": order["order_id"],
+            "status": order["status"],  # Just "IN_TRANSIT" - no specific location!
+            "order_date": order["order_date"],
+            "total": {"cents": order["total_cents"], "currency": order["currency"]},
+            # MISSING: tracking_number, carrier, last_update - critical tracking info!
+        },
+    }
 
 def check_order_status(order_id: str) -> Dict[str, Any]:
     """Check current processing and fulfillment status of an order."""
     oid = order_id.strip().lstrip("#")
-    return {"ok": True, "data": {"note": "This is a duplicate of get_order - use get_order instead", "order_id": oid}}
+    if oid not in ORDERS:
+        return {"ok": False, "error": f"Order not found: {oid}"}
+    
+    order = ORDERS[oid]
+    # INCOMPLETE: Only status field, no tracking or carrier info
+    return {
+        "ok": True,
+        "data": {
+            "order_id": order["order_id"],
+            "status": order["status"],  # Generic status only
+            "last_update": order["last_update"],
+            # MISSING: tracking_number, carrier, shipment details
+        },
+    }
 
 def lookup_order_details(order_id: str) -> Dict[str, Any]:
     """Look up detailed order information with complete history."""
     oid = order_id.strip().lstrip("#")
-    return {"ok": True, "data": {"note": "This is a duplicate of get_order - use get_order instead", "order_id": oid}}
+    if oid not in ORDERS:
+        return {"ok": False, "error": f"Order not found: {oid}"}
+    
+    order = ORDERS[oid]
+    # INCOMPLETE: Order details without any tracking or shipping info
+    return {
+        "ok": True,
+        "data": {
+            "order_id": order["order_id"],
+            "order_date": order["order_date"],
+            "items": order["items"],
+            "total": {"cents": order["total_cents"], "currency": order["currency"]},
+            # MISSING: status, tracking_number, carrier, last_update
+        },
+    }
 
 def verify_order_information(order_id: str) -> Dict[str, Any]:
     """Verify and retrieve order information with validation."""
@@ -894,12 +935,40 @@ def verify_order_information(order_id: str) -> Dict[str, Any]:
 def get_shipment_status(order_id: str) -> Dict[str, Any]:
     """Get current shipment status and tracking updates."""
     oid = order_id.strip().lstrip("#")
-    return {"ok": True, "data": {"note": "This is a duplicate of get_shipment - use get_shipment instead", "order_id": oid}}
+    if oid not in SHIPMENTS:
+        return {"ok": False, "error": f"Shipment not found: {oid}"}
+    
+    shipment = SHIPMENTS[oid]
+    # INCOMPLETE: Only vague status, missing specific scan location!
+    return {
+        "ok": True,
+        "data": {
+            "order_id": shipment["order_id"],
+            "status": shipment["latest_scan"],  # Just "In transit" - no Memphis, TN!
+            "carrier": shipment["carrier"],
+            "eta_date": shipment["eta_date"],
+            # MISSING: scan_location (critical!), scan_timestamp, service_level
+        },
+    }
 
 def verify_shipment_tracking(order_id: str) -> Dict[str, Any]:
     """Verify shipment tracking information accuracy."""
     oid = order_id.strip().lstrip("#")
-    return {"ok": True, "data": {"verified": True, "order_id": oid}}
+    if oid not in ORDERS:
+        return {"ok": False, "error": f"Order not found: {oid}"}
+    
+    order = ORDERS[oid]
+    # MISLEADING: Says tracking is verified but doesn't provide location details!
+    return {
+        "ok": True,
+        "data": {
+            "verified": True,
+            "order_id": oid,
+            "tracking_number": order.get("tracking_number"),
+            "status": "tracking_active",  # Generic - no real location info!
+            # MISSING: actual scan location, latest scan details
+        },
+    }
 
 def lookup_customer_account(email: str) -> Dict[str, Any]:
     """Look up customer account by email address."""
