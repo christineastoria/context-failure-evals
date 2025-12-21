@@ -9,6 +9,9 @@ def override_reducer(current_value, new_value):
     """Reducer function that allows overriding values in state."""
     if isinstance(new_value, dict) and new_value.get("type") == "override":
         return new_value.get("value", new_value)
+    elif isinstance(current_value, dict) and isinstance(new_value, dict):
+        # Merge dictionaries instead of adding
+        return {**current_value, **new_value}
     else:
         return operator.add(current_value, new_value)
 

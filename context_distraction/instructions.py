@@ -61,7 +61,7 @@ Key deliverables are any important pieces of information that must be included i
 Not everything the user asks for should be considered a key deliverable. You should include all explicitly highlighted requests, but use your best judgement on the overall query if there's additional key information that should be included.
 """
 
-GRAPH_SUPERVISOR_INSTRUCTIONS = """You are a research supervisor. Your job is to conduct research by calling research tools. For context, today's date is {date}.
+GRAPH_SUPERVISOR_INSTRUCTIONS = f"""You are a research supervisor. Your job is to conduct research by calling research tools. For context, today's date is {datetime.now().strftime('%B %d, %Y')}.
 
 <Task>
 Your focus is to call the "general_research" and "deep_research" tools to conduct research against the overall research question passed in by the user. 
@@ -72,10 +72,10 @@ When you are completely satisfied with the research findings returned from the t
 You have access to these main tools:
 1. **general_research**: Gather general research information needed for report construction.
 2. **deep_research**: Delegate research tasks to specialized sub-agents. Should be used for resolving a key deliverable.
-3. **ResearchComplete**: Indicate that research is complete
-4. **think_tool**: For reflection and strategic planning during research. Returns current status of key deliverables. Use this to plan your approach, including any calculations and formulas you need to use.
+3. **research_complete**: Indicate that research is complete and ready for final report generation. Call this when all key deliverables have been resolved.
+4. **think_tool**: For reflection and strategic planning during research. Returns current status of key deliverables. Use SPARINGLY - only when you need to plan before deep_research or assess progress after deep_research.
 
-**CRITICAL: Use think_tool before calling deep_research to plan your approach, and after each deep_research to assess progress. Do not call think_tool with any other tools in parallel.**
+**CRITICAL: Use think_tool SPARINGLY. Only use it before calling deep_research to plan your approach, or after deep_research to assess progress. Do NOT use think_tool repeatedly in a loop - it is a limited resource. Do not call think_tool with any other tools in parallel.**
 </Available Tools>
 
 <Hard Limits>
@@ -87,17 +87,20 @@ You have access to these main tools:
 </Hard Limits>
 
 <Show Your Thinking>
-Before you call deep_research tool call, use think_tool to plan your approach:
-- Do I need to call
+Use think_tool SPARINGLY - it is a limited resource. Only use it when absolutely necessary:
+
+Before calling deep_research (use think_tool ONCE to plan):
 - Which key deliverables are still "to be determined"?
-- For key deliverable, what equations and formulas will be needed?
+- For the key deliverable, what equations and formulas will be needed?
 - Do I understand all definitions in the question to answer the key deliverable?
 
-After each deep_research tool call, use think_tool to analyze the results:
+After deep_research completes (use think_tool ONCE to assess):
 - What key information did I find?
 - What's missing?
 - Do I have enough to answer the question comprehensively?
-- Should I delegate more research or call ResearchComplete?
+- Should I delegate more research or call research_complete?
+
+**DO NOT use think_tool repeatedly or in loops. Use it once before deep_research and once after, then proceed with actions.**
 </Show Your Thinking>
 
 <Approach Rules>
@@ -179,16 +182,16 @@ FINAL_REPORT_INSTRUCTIONS = f"""You are generating the final comprehensive resea
    - Appendices
 
 2. **Structured Data Section**: At the end of your report, include a JSON section matching this format:
-   ```json
-   {{
+```json
+{{
      "answers": {{
        "1": <answer to first deliverable>,
        "2": <answer to second deliverable>,
        "3": <answer to third deliverable>,
-       ...
-     }}
-   }}
-   ```
+    ...
+  }}
+}}
+```
    Each answer should be the specific value, number, or result for that deliverable. Use the deliverables dictionary provided to populate these answers. Ensure all numeric values are actual numbers (not strings), and all calculations are accurate based on the research findings.
 
 **Report Generation Guidelines:**

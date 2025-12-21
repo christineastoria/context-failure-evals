@@ -29,8 +29,10 @@ async def run_graph_agent(inputs: dict) -> dict:
     final_state = {}
     all_messages = []
     
+    from langchain_core.messages import HumanMessage
+    
     async for chunk in graph.astream(
-        {"messages": [("user", query)]},
+        {"supervisor_messages": [HumanMessage(content=query)]},
         config=config,
         subgraphs=True,
         stream_mode="updates",

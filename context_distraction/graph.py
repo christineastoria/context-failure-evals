@@ -2,14 +2,18 @@
 
 from typing import Literal
 import asyncio
+from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage, get_buffer_string
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
+from langgraph.graph.message import add_messages
+from langchain_core.messages import AIMessage
 from langgraph.types import Command
 from langchain_openai import ChatOpenAI
 from context_distraction.instructions import (
     GRAPH_PLANNER_INSTRUCTIONS,
     GRAPH_SUPERVISOR_INSTRUCTIONS,
+    GRAPH_RESEARCHER_INSTRUCTIONS,
     FINAL_REPORT_INSTRUCTIONS
 )
 from context_distraction.state import ResearchPlan, SupervisorState, ResearcherState
@@ -18,9 +22,12 @@ from context_distraction.tools import (
     finish, 
     general_research, 
     store_deliverable, 
-    think_tool, 
+    think_tool,
     create_deep_research_tool,
+    research_complete,
 )
+
+load_dotenv()
 
 # State definitions (simplified - user will define these)
 # AgentState, SupervisorState, ResearcherState
@@ -28,12 +35,14 @@ llm = ChatOpenAI(model="gpt-4o-mini")
 
 
 researcher_tools_list = all_research_tools + [store_deliverable, finish]
-researcher_llm = llm.bind_tools(researcher_tools_list)
+researcher_llm = llm.bind_tools(researcher_tools_list, parallel_tool_calls=False)
 
 async def researcher(state, config):
     """Individual researcher that delivers a key deliverable."""
     researcher_messages = state.get("reseacher_messages", [])
-    result = researcher_llm.invoke(researcher_messages)
+    # Add researcher instructions to the messages
+    full_prompt = [SystemMessage(content=GRAPH_RESEARCHER_INSTRUCTIONS)] + researcher_messages
+    result = researcher_llm.invoke(full_prompt)
     return {"reseacher_messages": [result]}
 
 
@@ -64,14 +73,12 @@ researcher_subgraph = researcher_builder.compile()
 
 
 plan_llm = llm.with_structured_output(ResearchPlan)
-async def create_research_plan(state, config) -> Command[Literal["research_supervisor"]]:
+async def create_research_plan(state, config) -> Command[Literal["supervisor"]]:
     """Transform user messages into a structured research brief."""
-    messages = state.get("messages", [])
+    supervisor_messages = state.get("supervisor_messages", [])
     
-    prompt = [
-        SystemMessage(content=GRAPH_PLANNER_INSTRUCTIONS),
-        HumanMessage(content=messages)
-    ]
+    # Pass the whole message history
+    prompt = [SystemMessage(content=GRAPH_PLANNER_INSTRUCTIONS)] + supervisor_messages
     result = plan_llm.invoke(prompt)
     query = result.query
     plan = result.research_plan
@@ -79,15 +86,16 @@ async def create_research_plan(state, config) -> Command[Literal["research_super
         deliverable: "To be determined"
         for deliverable in result.key_deliverables
     }
-
+    
     return Command(
-        goto="research_supervisor",
+        goto="supervisor",
         update={
             "research_plan": plan,
             "deliverables": deliverables,
             "query": query,
             "supervisor_messages": [
-                SystemMessage(content=GRAPH_SUPERVISOR_INSTRUCTIONS)
+                HumanMessage(content=f"The user's query is: {query}"),
+                HumanMessage(content=f"Current status of key deliverables: {deliverables}")
             ]
         }
     )
@@ -95,18 +103,15 @@ async def create_research_plan(state, config) -> Command[Literal["research_super
 
 # Create deep_research tool with researcher_subgraph reference
 deep_research = create_deep_research_tool(researcher_subgraph)
-supervisor_tools = [general_research, deep_research, think_tool]
+supervisor_tools = [general_research, deep_research, think_tool, research_complete]
 supervisor_llm = llm.bind_tools(supervisor_tools)
 
 async def supervisor(state, config) -> Command[Literal["supervisor_tools", "__end__"]]:
     """Lead research supervisor that plans research strategy."""
     supervisor_messages = state.get("supervisor_messages", [])
-    supervisor_messages.append(HumanMessage(content="The user's query is: {query}"))
-    supervisor_messages.append(HumanMessage(content="current status of key deliverables: {deliverables}"))
+    result = supervisor_llm.invoke([SystemMessage(content=GRAPH_SUPERVISOR_INSTRUCTIONS)] + supervisor_messages)
     
-    result = supervisor_llm.invoke(supervisor_messages)
-    
-    return {supervisor_messages: [result]}
+    return {"supervisor_messages": [result]}
     
 
 def should_continue(state: SupervisorState) -> Literal["supervisor_tools", "__end__"]:
@@ -119,6 +124,27 @@ def should_continue(state: SupervisorState) -> Literal["supervisor_tools", "__en
         return "__end__"
     else:
         return "supervisor_tools"
+
+
+def check_research_complete(state: SupervisorState) -> Literal["supervisor", "__end__"]:
+    """Check if the last tool called was research_complete and route accordingly."""
+    supervisor_messages = state.get("supervisor_messages", [])
+    if not supervisor_messages:
+        return "supervisor"
+    
+    # Find the last AIMessage with tool_calls (should be the one that just executed tools)
+    for i in range(len(supervisor_messages) - 1, -1, -1):
+        msg = supervisor_messages[i]
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            # Check if any tool call was research_complete
+            for tool_call in msg.tool_calls:
+                tool_name = tool_call.get('name') if isinstance(tool_call, dict) else getattr(tool_call, 'name', '')
+                if tool_name == 'research_complete':
+                    return "__end__"
+            # Found an AIMessage with tool_calls, but research_complete wasn't called
+            break
+    
+    return "supervisor"
 
 
 # Supervisor Subgraph
@@ -134,7 +160,14 @@ supervisor_builder.add_conditional_edges(
         "__end__": END
     }
 )
-supervisor_builder.add_edge("supervisor_tools", "supervisor")  # Loop back to supervisor after tools
+supervisor_builder.add_conditional_edges(
+    "supervisor_tools",
+    check_research_complete,
+    {
+        "supervisor": "supervisor",
+        "__end__": END
+    }
+)
 supervisor_subgraph = supervisor_builder.compile()
 
 

@@ -25,8 +25,8 @@ import random
 # CORE RESEARCH TOOLS
 # =====================================================
 
-@tool
-def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
+def _research_topic_impl(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
+    """Internal implementation of research_topic."""
     """
     Research a specific topic and return comprehensive information.
     
@@ -37,26 +37,27 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     Returns:
         Detailed research information including key points, statistics, experts, and case studies.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
-        return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found in research database. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
-        }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    
-    # Generate verbose response based on depth
-    if depth == "brief":
-        key_points = topic_data["key_points"][:3]
-    elif depth == "standard":
-        key_points = topic_data["key_points"][:6]
-    else:  # comprehensive
-        key_points = topic_data["key_points"]
-    
-    # Generate VERY verbose response to flood context
-    verbose_summary = f"""
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic}' not found in research database. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
+            }
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        
+        # Generate verbose response based on depth
+        if depth == "brief":
+            key_points = topic_data["key_points"][:3]
+        elif depth == "standard":
+            key_points = topic_data["key_points"][:6]
+        else:  # comprehensive
+            key_points = topic_data["key_points"]
+        
+        # Generate VERY verbose response to flood context
+        verbose_summary = f"""
     COMPREHENSIVE RESEARCH REPORT: {topic_data['topic']}
     
     EXECUTIVE SUMMARY:
@@ -67,16 +68,16 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     
     KEY FINDINGS:
     """
-    for i, point in enumerate(key_points, 1):
-        verbose_summary += f"""
+        for i, point in enumerate(key_points, 1):
+            verbose_summary += f"""
     {i}. {point}
     
     This finding represents a critical insight into the {topic_data['topic']} domain. The implications of this discovery 
     extend across multiple dimensions including technological advancement, market dynamics, regulatory considerations, and 
     strategic positioning. Industry leaders have identified this as a key driver of future growth and innovation in the sector.
     """
-    
-    verbose_summary += f"""
+        
+        verbose_summary += f"""
     
     STATISTICAL OVERVIEW:
     The research has identified multiple key statistical metrics that provide quantitative insights 
@@ -93,11 +94,11 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     
     Available Experts:
     """
-    for expert_id in topic_data['experts']:
-        if expert_id in EXPERT_SUMMARIES:
-            verbose_summary += f"\n    {EXPERT_SUMMARIES[expert_id]}\n"
-    
-    verbose_summary += f"""
+        for expert_id in topic_data['experts']:
+            if expert_id in EXPERT_SUMMARIES:
+                verbose_summary += f"\n    {EXPERT_SUMMARIES[expert_id]}\n"
+        
+        verbose_summary += f"""
     
     CASE STUDY RECOMMENDATIONS:
     {len(topic_data['case_studies'])} relevant case studies have been identified that illustrate key principles, successful 
@@ -107,11 +108,11 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     
     Available Case Studies:
     """
-    for case_id in topic_data['case_studies']:
-        if case_id in CASE_STUDY_SUMMARIES:
-            verbose_summary += f"\n    {CASE_STUDY_SUMMARIES[case_id]}\n"
-    
-    verbose_summary += f"""
+        for case_id in topic_data['case_studies']:
+            if case_id in CASE_STUDY_SUMMARIES:
+                verbose_summary += f"\n    {CASE_STUDY_SUMMARIES[case_id]}\n"
+        
+        verbose_summary += f"""
     
     METHODOLOGY AND DATA SOURCES:
     This research employed a rigorous multi-method approach combining quantitative analysis, qualitative expert interviews, 
@@ -131,38 +132,45 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     changes, and international developments. Stakeholders are encouraged to stay informed about ongoing developments in this 
     rapidly evolving field.
     """
-    
-    # Build expert summaries list
-    expert_summaries_list = []
-    for expert_id in topic_data['experts']:
-        if expert_id in EXPERT_SUMMARIES:
-            expert_summaries_list.append({
-                "expert_id": expert_id,
-                "summary": EXPERT_SUMMARIES[expert_id]
-            })
-    
-    # Build case study summaries list
-    case_study_summaries_list = []
-    for case_id in topic_data['case_studies']:
-        if case_id in CASE_STUDY_SUMMARIES:
-            case_study_summaries_list.append({
-                "case_study_id": case_id,
-                "summary": CASE_STUDY_SUMMARIES[case_id]
-            })
-    
-    return {
-        "ok": True,
-        "data": {
-            "topic": topic_data["topic"],
-            "research_depth": depth,
-            "key_points": key_points,
-            # Note: Statistics are NOT included here - use get_statistics() tool for detailed metrics
-            "expert_summaries": expert_summaries_list,  # Verbose summaries with IDs for calling get_expert_opinion
-            "case_study_summaries": case_study_summaries_list,  # Verbose summaries with IDs for calling get_case_study
-            "summary": verbose_summary,
-            "detailed_analysis": verbose_summary  # Duplicate for extra verbosity
+        
+        # Build expert summaries list
+        expert_summaries_list = []
+        for expert_id in topic_data['experts']:
+            if expert_id in EXPERT_SUMMARIES:
+                expert_summaries_list.append({
+                    "expert_id": expert_id,
+                    "summary": EXPERT_SUMMARIES[expert_id]
+                })
+        
+        # Build case study summaries list
+        case_study_summaries_list = []
+        for case_id in topic_data['case_studies']:
+            if case_id in CASE_STUDY_SUMMARIES:
+                case_study_summaries_list.append({
+                    "case_study_id": case_id,
+                    "summary": CASE_STUDY_SUMMARIES[case_id]
+                })
+        
+        return {
+            "data": {
+                "topic": topic_data["topic"],
+                "research_depth": depth,
+                "key_points": key_points,
+                # Note: Statistics are NOT included here - use get_statistics() tool for detailed metrics
+                "expert_summaries": expert_summaries_list,  # Verbose summaries with IDs for calling get_expert_opinion
+                "case_study_summaries": case_study_summaries_list,  # Verbose summaries with IDs for calling get_case_study
+                "summary": verbose_summary,
+                "detailed_analysis": verbose_summary  # Duplicate for extra verbosity
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing research_topic: {str(e)}"}
+
+
+@tool
+def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
+    """Research a specific topic and return comprehensive information."""
+    return _research_topic_impl(topic, depth)
 
 
 @tool
@@ -177,49 +185,52 @@ def get_expert_opinion(topic: str, expert_id: Optional[str] = None) -> Dict[str,
     Returns:
         Detailed expert opinion including name, affiliation, expertise, and detailed commentary.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
+            }
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        available_experts = topic_data["experts"]
+        
+        if expert_id and expert_id in EXPERT_OPINIONS:
+            expert_key = expert_id
+        else:
+            # Select random expert for this topic
+            expert_key = random.choice(available_experts)
+        
+        if expert_key not in EXPERT_OPINIONS:
+            return {
+                "ok": False,
+                "error": f"Expert '{expert_key}' not found"
+            }
+        
+        expert = EXPERT_OPINIONS[expert_key]
+        
+        # Get opinion on this topic
+        opinion = expert["opinions"].get(topic_key, "No specific opinion available for this topic.")
+        
         return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
+            "ok": True,
+            "data": {
+                "expert_id": expert_key,
+                "expert_name": expert["name"],
+                "affiliation": expert["affiliation"],
+                "expertise_areas": expert["expertise"],
+                "topic": topic_data["topic"],
+                "opinion": opinion,
+                "related_topics": [t for t in expert["opinions"].keys() if t != topic_key],
+                "credibility_notes": f"{expert['name']} is a recognized expert in {', '.join(expert['expertise'][:2])} "
+                                    f"with extensive research and industry experience. Their insights are based on "
+                                    f"years of study and practical application in the field."
+            }
         }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    available_experts = topic_data["experts"]
-    
-    if expert_id and expert_id in EXPERT_OPINIONS:
-        expert_key = expert_id
-    else:
-        # Select random expert for this topic
-        expert_key = random.choice(available_experts)
-    
-    if expert_key not in EXPERT_OPINIONS:
-        return {
-            "ok": False,
-            "error": f"Expert '{expert_key}' not found"
-        }
-    
-    expert = EXPERT_OPINIONS[expert_key]
-    
-    # Get opinion on this topic
-    opinion = expert["opinions"].get(topic_key, "No specific opinion available for this topic.")
-    
-    return {
-        "ok": True,
-        "data": {
-            "expert_id": expert_key,
-            "expert_name": expert["name"],
-            "affiliation": expert["affiliation"],
-            "expertise_areas": expert["expertise"],
-            "topic": topic_data["topic"],
-            "opinion": opinion,
-            "related_topics": [t for t in expert["opinions"].keys() if t != topic_key],
-            "credibility_notes": f"{expert['name']} is a recognized expert in {', '.join(expert['expertise'][:2])} "
-                                f"with extensive research and industry experience. Their insights are based on "
-                                f"years of study and practical application in the field."
-        }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing get_expert_opinion: {str(e)}"}
 
 
 @tool
@@ -234,29 +245,30 @@ def get_statistics(topic: str, metric: Optional[str] = None) -> Dict[str, Any]:
     Returns:
         Comprehensive statistics including all metrics, trends, and contextual information.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
-        return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
-        }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    stats = topic_data["statistics"]
-    
-    if metric:
-        if metric not in stats:
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
             return {
                 "ok": False,
-                "error": f"Metric '{metric}' not found. Available metrics: {', '.join(stats.keys())}"
+                "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
             }
-        selected_stats = {metric: stats[metric]}
-    else:
-        selected_stats = stats
-    
-    # Generate verbose statistical analysis
-    stat_descriptions = {
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        stats = topic_data["statistics"]
+        
+        if metric:
+            if metric not in stats:
+                return {
+                    "ok": False,
+                    "error": f"Metric '{metric}' not found. Available metrics: {', '.join(stats.keys())}"
+                }
+            selected_stats = {metric: stats[metric]}
+        else:
+            selected_stats = stats
+        
+        # Generate verbose statistical analysis
+        stat_descriptions = {
         "global_capacity_gw": "Global installed capacity in gigawatts",
         "annual_growth_rate_percent": "Year-over-year growth rate percentage",
         "investment_billions_usd": "Total annual investment in billions of US dollars",
@@ -290,36 +302,37 @@ def get_statistics(topic: str, metric: Optional[str] = None) -> Dict[str, Any]:
         "space_industry_value_billions_usd": "Total space industry market value in billions of US dollars",
         "mars_missions_active": "Number of active Mars missions",
         "astronauts_in_space": "Current number of astronauts in space",
-        "space_debris_tracked": "Number of space debris objects being tracked"
-    }
-    
-    detailed_stats = {}
-    for key, value in selected_stats.items():
-        description = stat_descriptions.get(key, "Statistical metric")
-        detailed_stats[key] = {
-            "value": value,
-            "description": description,
-            "unit": _get_unit(key),
-            "context": f"This metric represents {description.lower()} for {topic_data['topic']}. "
-                      f"The value of {value} {_get_unit(key)} indicates significant activity and growth in this field."
+            "space_debris_tracked": "Number of space debris objects being tracked"
         }
-    
-    return {
-        "ok": True,
-        "data": {
-            "topic": topic_data["topic"],
-            "statistics": detailed_stats,
-            "analysis": f"Statistical analysis for {topic_data['topic']} reveals {len(selected_stats)} key metrics. "
-                       f"These metrics demonstrate the scale, growth, and impact of this field. "
-                       f"Trends indicate strong growth and increasing importance in the global economy.",
-            "data_sources": "Statistics compiled from industry reports, academic research, government data, "
-                          "and market analysis. Data is current as of 2023-2024 and represents the most "
-                          "recent comprehensive analysis available.",
-            "methodology": "Metrics are calculated using standardized methodologies across sources. "
-                         "Where multiple sources exist, values represent consensus estimates. "
-                         "All financial figures are in US dollars unless otherwise specified."
+        
+        detailed_stats = {}
+        for key, value in selected_stats.items():
+            description = stat_descriptions.get(key, "Statistical metric")
+            detailed_stats[key] = {
+                "value": value,
+                "description": description,
+                "unit": _get_unit(key),
+                "context": f"This metric represents {description.lower()} for {topic_data['topic']}. "
+                          f"The value of {value} {_get_unit(key)} indicates significant activity and growth in this field."
+            }
+        
+        return {
+            "data": {
+                "topic": topic_data["topic"],
+                "statistics": detailed_stats,
+                "analysis": f"Statistical analysis for {topic_data['topic']} reveals {len(selected_stats)} key metrics. "
+                           f"These metrics demonstrate the scale, growth, and impact of this field. "
+                           f"Trends indicate strong growth and increasing importance in the global economy.",
+                "data_sources": "Statistics compiled from industry reports, academic research, government data, "
+                              "and market analysis. Data is current as of 2023-2024 and represents the most "
+                              "recent comprehensive analysis available.",
+                "methodology": "Metrics are calculated using standardized methodologies across sources. "
+                             "Where multiple sources exist, values represent consensus estimates. "
+                             "All financial figures are in US dollars unless otherwise specified."
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing get_statistics: {str(e)}"}
 
 
 @tool
@@ -334,54 +347,57 @@ def get_case_study(topic: str, case_study_id: Optional[str] = None) -> Dict[str,
     Returns:
         Comprehensive case study including title, details, metrics, lessons learned, and analysis.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
+            }
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        available_case_studies = topic_data["case_studies"]
+        
+        if case_study_id and case_study_id in CASE_STUDIES:
+            case_key = case_study_id
+        else:
+            # Select random case study for this topic
+            case_key = random.choice(available_case_studies)
+        
+        if case_key not in CASE_STUDIES:
+            return {
+                "ok": False,
+                "error": f"Case study '{case_key}' not found"
+            }
+        
+        case = CASE_STUDIES[case_key]
+        
         return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found. Available topics: {', '.join(RESEARCH_TOPICS.keys())}"
+            "ok": True,
+            "data": {
+                "case_study_id": case_key,
+                "title": case["title"],
+                "topic": case["topic"],
+                "detailed_description": case["details"],
+                "key_metrics": case["metrics"],
+                "lessons_learned": case["lessons"],
+                "relevance": f"This case study is highly relevant to understanding {topic_data['topic']}. "
+                            f"It provides concrete examples of real-world implementation, challenges faced, "
+                            f"and outcomes achieved. The metrics demonstrate measurable impact, while the "
+                            f"lessons learned offer valuable insights for future projects and initiatives.",
+                "applicability": f"The principles demonstrated in this case study can be applied to similar "
+                               f"situations in {topic_data['topic']}. Key factors for success include "
+                               f"{', '.join(case['lessons'][:2])}. Organizations looking to implement "
+                               f"similar initiatives should consider these factors carefully.",
+                "additional_context": f"This case study represents one of {len(available_case_studies)} "
+                                     f"notable examples in {topic_data['topic']}. Each case study offers "
+                                     f"unique insights into different aspects, challenges, and approaches "
+                                     f"within this field."
+            }
         }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    available_case_studies = topic_data["case_studies"]
-    
-    if case_study_id and case_study_id in CASE_STUDIES:
-        case_key = case_study_id
-    else:
-        # Select random case study for this topic
-        case_key = random.choice(available_case_studies)
-    
-    if case_key not in CASE_STUDIES:
-        return {
-            "ok": False,
-            "error": f"Case study '{case_key}' not found"
-        }
-    
-    case = CASE_STUDIES[case_key]
-    
-    return {
-        "ok": True,
-        "data": {
-            "case_study_id": case_key,
-            "title": case["title"],
-            "topic": case["topic"],
-            "detailed_description": case["details"],
-            "key_metrics": case["metrics"],
-            "lessons_learned": case["lessons"],
-            "relevance": f"This case study is highly relevant to understanding {topic_data['topic']}. "
-                        f"It provides concrete examples of real-world implementation, challenges faced, "
-                        f"and outcomes achieved. The metrics demonstrate measurable impact, while the "
-                        f"lessons learned offer valuable insights for future projects and initiatives.",
-            "applicability": f"The principles demonstrated in this case study can be applied to similar "
-                           f"situations in {topic_data['topic']}. Key factors for success include "
-                           f"{', '.join(case['lessons'][:2])}. Organizations looking to implement "
-                           f"similar initiatives should consider these factors carefully.",
-            "additional_context": f"This case study represents one of {len(available_case_studies)} "
-                                 f"notable examples in {topic_data['topic']}. Each case study offers "
-                                 f"unique insights into different aspects, challenges, and approaches "
-                                 f"within this field."
-        }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing get_case_study: {str(e)}"}
 
 
 @tool
@@ -397,103 +413,106 @@ def compare_topics(topic1: str, topic2: str) -> Dict[str, Any]:
     Returns:
         Detailed comparison including similarities, differences, market size, growth rates, and implications.
     """
-    topic1_key = topic1.lower().replace(" ", "_")
-    topic2_key = topic2.lower().replace(" ", "_")
-    
-    if topic1_key not in RESEARCH_TOPICS:
+    try:
+        topic1_key = topic1.lower().replace(" ", "_")
+        topic2_key = topic2.lower().replace(" ", "_")
+        
+        if topic1_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic1}' not found"
+            }
+        
+        if topic2_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic2}' not found"
+            }
+        
+        topic1_data = RESEARCH_TOPICS[topic1_key]
+        topic2_data = RESEARCH_TOPICS[topic2_key]
+        
+        # Compare statistics
+        stats1 = topic1_data["statistics"]
+        stats2 = topic2_data["statistics"]
+        
+        comparison = {
+            "topic1": topic1_data["topic"],
+            "topic2": topic2_data["topic"],
+            "statistical_comparison": {},
+            "key_points_overlap": [],
+            "key_points_differences": [],
+            "market_comparison": {},
+            "growth_comparison": {},
+            "synergies": [],
+            "trade_offs": []
+        }
+        
+        # Compare common metrics
+        common_metrics = set(stats1.keys()) & set(stats2.keys())
+        for metric in common_metrics:
+            val1 = stats1[metric]
+            val2 = stats2[metric]
+            comparison["statistical_comparison"][metric] = {
+                "topic1_value": val1,
+                "topic2_value": val2,
+                "difference": val2 - val1,
+                "difference_percent": ((val2 - val1) / val1 * 100) if val1 != 0 else 0,
+                "analysis": f"{topic2_data['topic']} has a {metric} of {val2}, compared to {val1} for {topic1_data['topic']}. "
+                           f"This represents a difference of {abs(val2 - val1)} {_get_unit(metric)}."
+            }
+        
+        # Find overlapping key points
+        points1 = set([p[:50] for p in topic1_data["key_points"]])
+        points2 = set([p[:50] for p in topic2_data["key_points"]])
+        comparison["key_points_overlap"] = list(points1 & points2)[:3]
+        comparison["key_points_differences"] = [
+            f"{topic1_data['topic']} focuses on: {topic1_data['key_points'][0][:100]}",
+            f"{topic2_data['topic']} focuses on: {topic2_data['key_points'][0][:100]}"
+        ]
+        
+        # Market and growth comparison
+        if "global_market_billions_usd" in stats1 and "global_market_billions_usd" in stats2:
+            comparison["market_comparison"] = {
+                "topic1_market": stats1["global_market_billions_usd"],
+                "topic2_market": stats2["global_market_billions_usd"],
+                "combined_market": stats1["global_market_billions_usd"] + stats2["global_market_billions_usd"],
+                "analysis": f"The combined market size for both topics is ${stats1['global_market_billions_usd'] + stats2['global_market_billions_usd']} billion, "
+                           f"indicating significant economic activity across both fields."
+            }
+        
+        if "annual_growth_rate_percent" in stats1 and "annual_growth_rate_percent" in stats2:
+            comparison["growth_comparison"] = {
+                "topic1_growth": stats1["annual_growth_rate_percent"],
+                "topic2_growth": stats2["annual_growth_rate_percent"],
+                "faster_growing": topic2_data["topic"] if stats2["annual_growth_rate_percent"] > stats1["annual_growth_rate_percent"] else topic1_data["topic"],
+                "analysis": f"{topic2_data['topic'] if stats2['annual_growth_rate_percent'] > stats1['annual_growth_rate_percent'] else topic1_data['topic']} "
+                           f"is growing faster at {max(stats1['annual_growth_rate_percent'], stats2['annual_growth_rate_percent'])}% annually."
+            }
+        
+        # Generate synergies and trade-offs
+        comparison["synergies"] = [
+            f"Both {topic1_data['topic']} and {topic2_data['topic']} benefit from advances in artificial intelligence and computing.",
+            f"Cross-pollination between these fields could accelerate innovation in both areas.",
+            f"Combined applications could address complex challenges requiring expertise from both domains."
+        ]
+        
+        comparison["trade_offs"] = [
+            f"Investment in {topic1_data['topic']} may compete with resources for {topic2_data['topic']}.",
+            f"Different regulatory frameworks may apply to each field, requiring separate approaches.",
+            f"Technical expertise requirements differ, potentially limiting cross-field collaboration."
+        ]
+        
         return {
-            "ok": False,
-            "error": f"Topic '{topic1}' not found"
+            "ok": True,
+            "data": comparison,
+            "summary": f"Comprehensive comparison between {topic1_data['topic']} and {topic2_data['topic']} "
+                     f"reveals {len(common_metrics)} comparable metrics, {len(comparison['synergies'])} potential synergies, "
+                     f"and {len(comparison['trade_offs'])} important trade-offs to consider. "
+                     f"This analysis provides valuable insights for strategic planning and resource allocation."
         }
-    
-    if topic2_key not in RESEARCH_TOPICS:
-        return {
-            "ok": False,
-            "error": f"Topic '{topic2}' not found"
-        }
-    
-    topic1_data = RESEARCH_TOPICS[topic1_key]
-    topic2_data = RESEARCH_TOPICS[topic2_key]
-    
-    # Compare statistics
-    stats1 = topic1_data["statistics"]
-    stats2 = topic2_data["statistics"]
-    
-    comparison = {
-        "topic1": topic1_data["topic"],
-        "topic2": topic2_data["topic"],
-        "statistical_comparison": {},
-        "key_points_overlap": [],
-        "key_points_differences": [],
-        "market_comparison": {},
-        "growth_comparison": {},
-        "synergies": [],
-        "trade_offs": []
-    }
-    
-    # Compare common metrics
-    common_metrics = set(stats1.keys()) & set(stats2.keys())
-    for metric in common_metrics:
-        val1 = stats1[metric]
-        val2 = stats2[metric]
-        comparison["statistical_comparison"][metric] = {
-            "topic1_value": val1,
-            "topic2_value": val2,
-            "difference": val2 - val1,
-            "difference_percent": ((val2 - val1) / val1 * 100) if val1 != 0 else 0,
-            "analysis": f"{topic2_data['topic']} has a {metric} of {val2}, compared to {val1} for {topic1_data['topic']}. "
-                       f"This represents a difference of {abs(val2 - val1)} {_get_unit(metric)}."
-        }
-    
-    # Find overlapping key points
-    points1 = set([p[:50] for p in topic1_data["key_points"]])
-    points2 = set([p[:50] for p in topic2_data["key_points"]])
-    comparison["key_points_overlap"] = list(points1 & points2)[:3]
-    comparison["key_points_differences"] = [
-        f"{topic1_data['topic']} focuses on: {topic1_data['key_points'][0][:100]}",
-        f"{topic2_data['topic']} focuses on: {topic2_data['key_points'][0][:100]}"
-    ]
-    
-    # Market and growth comparison
-    if "global_market_billions_usd" in stats1 and "global_market_billions_usd" in stats2:
-        comparison["market_comparison"] = {
-            "topic1_market": stats1["global_market_billions_usd"],
-            "topic2_market": stats2["global_market_billions_usd"],
-            "combined_market": stats1["global_market_billions_usd"] + stats2["global_market_billions_usd"],
-            "analysis": f"The combined market size for both topics is ${stats1['global_market_billions_usd'] + stats2['global_market_billions_usd']} billion, "
-                       f"indicating significant economic activity across both fields."
-        }
-    
-    if "annual_growth_rate_percent" in stats1 and "annual_growth_rate_percent" in stats2:
-        comparison["growth_comparison"] = {
-            "topic1_growth": stats1["annual_growth_rate_percent"],
-            "topic2_growth": stats2["annual_growth_rate_percent"],
-            "faster_growing": topic2_data["topic"] if stats2["annual_growth_rate_percent"] > stats1["annual_growth_rate_percent"] else topic1_data["topic"],
-            "analysis": f"{topic2_data['topic'] if stats2['annual_growth_rate_percent'] > stats1['annual_growth_rate_percent'] else topic1_data['topic']} "
-                       f"is growing faster at {max(stats1['annual_growth_rate_percent'], stats2['annual_growth_rate_percent'])}% annually."
-        }
-    
-    # Generate synergies and trade-offs
-    comparison["synergies"] = [
-        f"Both {topic1_data['topic']} and {topic2_data['topic']} benefit from advances in artificial intelligence and computing.",
-        f"Cross-pollination between these fields could accelerate innovation in both areas.",
-        f"Combined applications could address complex challenges requiring expertise from both domains."
-    ]
-    
-    comparison["trade_offs"] = [
-        f"Investment in {topic1_data['topic']} may compete with resources for {topic2_data['topic']}.",
-        f"Different regulatory frameworks may apply to each field, requiring separate approaches.",
-        f"Technical expertise requirements differ, potentially limiting cross-field collaboration."
-    ]
-    
-    return {
-        "ok": True,
-        "data": comparison,
-        "summary": f"Comprehensive comparison between {topic1_data['topic']} and {topic2_data['topic']} "
-                 f"reveals {len(common_metrics)} comparable metrics, {len(comparison['synergies'])} potential synergies, "
-                 f"and {len(comparison['trade_offs'])} important trade-offs to consider. "
-                 f"This analysis provides valuable insights for strategic planning and resource allocation."
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing compare_topics: {str(e)}"}
 
 
 @tool
@@ -509,34 +528,35 @@ def get_year_data(topic: str, year: int) -> Dict[str, Any]:
     Returns:
         Data for the topic in that specific year.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
-        return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found"
-        }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    stats = topic_data["statistics"]
-    current_year = 2024
-    years_ago = current_year - year
-    
-    if years_ago < 0:
-        return {"ok": False, "error": f"Year {year} is in the future"}
-    
-    # Simulate data for that year
-    year_data = {}
-    growth_rate = 0.1
-    for metric, current_value in stats.items():
-        if isinstance(current_value, (int, float)) and current_value > 0:
-            if "growth_rate" in metric or "percent" in metric:
-                value = current_value * (1 - growth_rate * years_ago / 10)
-            else:
-                value = current_value / ((1 + growth_rate) ** years_ago)
-            year_data[metric] = value
-    
-    verbose_response = f"""
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic}' not found"
+            }
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        stats = topic_data["statistics"]
+        current_year = 2024
+        years_ago = current_year - year
+        
+        if years_ago < 0:
+            return {"ok": False, "error": f"Year {year} is in the future"}
+        
+        # Simulate data for that year
+        year_data = {}
+        growth_rate = 0.1
+        for metric, current_value in stats.items():
+            if isinstance(current_value, (int, float)) and current_value > 0:
+                if "growth_rate" in metric or "percent" in metric:
+                    value = current_value * (1 - growth_rate * years_ago / 10)
+                else:
+                    value = current_value / ((1 + growth_rate) ** years_ago)
+                year_data[metric] = value
+        
+        verbose_response = f"""
     HISTORICAL DATA RETRIEVAL: {topic_data['topic']} - YEAR {year}
     
     This data point represents the state of {topic_data['topic']} in the year {year}, which was {years_ago} years ago. 
@@ -552,8 +572,8 @@ def get_year_data(topic: str, year: int) -> Dict[str, Any]:
     
     METRIC VALUES FOR YEAR {year}:
     """
-    for metric, value in year_data.items():
-        verbose_response += f"""
+        for metric, value in year_data.items():
+            verbose_response += f"""
     - {metric}: {value}
     
     This metric represents a key indicator of the {topic_data['topic']} sector's performance in {year}. The value reflects 
@@ -561,17 +581,19 @@ def get_year_data(topic: str, year: int) -> Dict[str, Any]:
     Comparing this value to current values reveals the trajectory and pace of change in the field. This historical data point 
     is essential for trend analysis, growth projections, and understanding the long-term evolution of the sector.
     """
-    
-    return {
-        "ok": True,
-        "data": {
-            "topic": topic_data["topic"],
-            "year": year,
-            "years_ago": years_ago,
-            "metrics": year_data,
-            "detailed_report": verbose_response
+        
+        return {
+            "ok": True,
+            "data": {
+                "topic": topic_data["topic"],
+                "year": year,
+                "years_ago": years_ago,
+                "metrics": year_data,
+                "detailed_report": verbose_response
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing get_year_data: {str(e)}"}
 
 
 @tool
@@ -586,60 +608,63 @@ def get_historical_trends(topic: str, time_range_years: int = 10) -> Dict[str, A
     Returns:
         Detailed historical analysis including trends, milestones, and evolution.
     """
-    topic_key = topic.lower().replace(" ", "_")
-    
-    if topic_key not in RESEARCH_TOPICS:
+    try:
+        topic_key = topic.lower().replace(" ", "_")
+        
+        if topic_key not in RESEARCH_TOPICS:
+            return {
+                "ok": False,
+                "error": f"Topic '{topic}' not found"
+            }
+        
+        topic_data = RESEARCH_TOPICS[topic_key]
+        stats = topic_data["statistics"]
+        
+        # Generate historical trend data (simulated)
+        current_year = 2024
+        years = list(range(current_year - time_range_years, current_year + 1))
+        
+        # Simulate growth trends
+        trends = {}
+        for metric, current_value in stats.items():
+            if isinstance(current_value, (int, float)) and current_value > 0:
+                # Simulate exponential or linear growth
+                growth_rate = 0.1  # 10% annual growth assumption
+                historical_values = []
+                for year in years:
+                    years_ago = current_year - year
+                    if "growth_rate" in metric or "percent" in metric:
+                        # For percentages, use different logic
+                        value = current_value * (1 - growth_rate * years_ago / time_range_years)
+                    else:
+                        # For absolute values, assume exponential growth
+                        value = current_value / ((1 + growth_rate) ** years_ago)
+                    historical_values.append({"year": year, "value": value})
+                trends[metric] = historical_values
+        
         return {
-            "ok": False,
-            "error": f"Topic '{topic}' not found"
+            "ok": True,
+            "data": {
+                "topic": topic_data["topic"],
+                "time_range_years": time_range_years,
+                "historical_trends": trends,
+                "key_milestones": [
+                    f"{time_range_years} years ago: Early research and development phase",
+                    f"{time_range_years // 2} years ago: First commercial applications emerged",
+                    "Recent years: Rapid growth and mainstream adoption",
+                    "Current: Mature market with established players and standards"
+                ],
+                "trend_analysis": f"Analysis of {topic_data['topic']} over the past {time_range_years} years reveals "
+                                f"consistent growth across all major metrics. The field has evolved from early research "
+                                f"to commercial viability, with accelerating adoption in recent years. Key drivers "
+                                f"include technological advances, cost reductions, and increasing market demand.",
+                "future_projection": f"Based on current trends, {topic_data['topic']} is expected to continue growing "
+                                   f"at a strong pace. Factors supporting continued growth include ongoing innovation, "
+                                   f"expanding applications, and increasing investment from both public and private sectors."
+            }
         }
-    
-    topic_data = RESEARCH_TOPICS[topic_key]
-    stats = topic_data["statistics"]
-    
-    # Generate historical trend data (simulated)
-    current_year = 2024
-    years = list(range(current_year - time_range_years, current_year + 1))
-    
-    # Simulate growth trends
-    trends = {}
-    for metric, current_value in stats.items():
-        if isinstance(current_value, (int, float)) and current_value > 0:
-            # Simulate exponential or linear growth
-            growth_rate = 0.1  # 10% annual growth assumption
-            historical_values = []
-            for year in years:
-                years_ago = current_year - year
-                if "growth_rate" in metric or "percent" in metric:
-                    # For percentages, use different logic
-                    value = current_value * (1 - growth_rate * years_ago / time_range_years)
-                else:
-                    # For absolute values, assume exponential growth
-                    value = current_value / ((1 + growth_rate) ** years_ago)
-                historical_values.append({"year": year, "value": value})
-            trends[metric] = historical_values
-    
-    return {
-        "ok": True,
-        "data": {
-            "topic": topic_data["topic"],
-            "time_range_years": time_range_years,
-            "historical_trends": trends,
-            "key_milestones": [
-                f"{time_range_years} years ago: Early research and development phase",
-                f"{time_range_years // 2} years ago: First commercial applications emerged",
-                "Recent years: Rapid growth and mainstream adoption",
-                "Current: Mature market with established players and standards"
-            ],
-            "trend_analysis": f"Analysis of {topic_data['topic']} over the past {time_range_years} years reveals "
-                            f"consistent growth across all major metrics. The field has evolved from early research "
-                            f"to commercial viability, with accelerating adoption in recent years. Key drivers "
-                            f"include technological advances, cost reductions, and increasing market demand.",
-            "future_projection": f"Based on current trends, {topic_data['topic']} is expected to continue growing "
-                               f"at a strong pace. Factors supporting continued growth include ongoing innovation, "
-                               f"expanding applications, and increasing investment from both public and private sectors."
-        }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing get_historical_trends: {str(e)}"}
 
 
 @tool
@@ -654,74 +679,77 @@ def synthesize_research(topics: List[str], focus_areas: Optional[List[str]] = No
     Returns:
         Comprehensive synthesis including cross-topic insights, patterns, and recommendations.
     """
-    if not topics:
-        return {
-            "ok": False,
-            "error": "At least one topic must be provided"
-        }
-    
-    topic_data_list = []
-    for topic in topics:
-        topic_key = topic.lower().replace(" ", "_")
-        if topic_key in RESEARCH_TOPICS:
-            topic_data_list.append(RESEARCH_TOPICS[topic_key])
-        else:
+    try:
+        if not topics:
             return {
                 "ok": False,
-                "error": f"Topic '{topic}' not found"
+                "error": "At least one topic must be provided"
             }
-    
-    # Generate synthesis
-    all_key_points = []
-    all_statistics = {}
-    all_experts = set()
-    all_case_studies = []
-    
-    for topic_data in topic_data_list:
-        all_key_points.extend(topic_data["key_points"])
-        all_statistics.update(topic_data["statistics"])
-        all_experts.update(topic_data["experts"])
-        all_case_studies.extend(topic_data["case_studies"])
-    
-    # Find common themes
-    common_themes = [
-        "Technological innovation driving growth",
-        "Significant market opportunities",
-        "Impact on global economy and society",
-        "Need for skilled professionals",
-        "Regulatory and policy considerations"
-    ]
-    
-    return {
-        "ok": True,
-        "data": {
-            "topics_synthesized": [td["topic"] for td in topic_data_list],
-            "total_key_points": len(all_key_points),
-            "total_statistics": len(all_statistics),
-            "total_experts": len(all_experts),
-            "total_case_studies": len(all_case_studies),
-            "common_themes": common_themes,
-            "cross_topic_insights": [
-                f"All {len(topic_data_list)} topics show strong growth potential and significant market size.",
-                f"Combined expertise across these fields includes {len(all_experts)} leading researchers and practitioners.",
-                f"Case studies reveal {len(all_case_studies)} successful implementations across the topics.",
-                f"Statistical analysis shows combined market value exceeding $500 billion.",
-                f"Key challenges include talent acquisition, regulatory compliance, and technological integration."
-            ],
-            "recommendations": [
-                f"Focus on areas where {len(topic_data_list)} topics intersect for maximum impact.",
-                f"Leverage expertise from {len(all_experts)} identified experts for strategic guidance.",
-                f"Study {len(all_case_studies)} case studies to understand best practices and lessons learned.",
-                f"Monitor trends across all topics to identify emerging opportunities.",
-                f"Develop integrated strategies that leverage synergies between topics."
-            ],
-            "synthesis_summary": f"This synthesis combines research from {len(topic_data_list)} major topics, "
-                              f"incorporating {len(all_key_points)} key points, {len(all_statistics)} statistical metrics, "
-                              f"insights from {len(all_experts)} experts, and analysis of {len(all_case_studies)} case studies. "
-                              f"The comprehensive analysis reveals {len(common_themes)} common themes and provides "
-                              f"{len(common_themes)} strategic recommendations for moving forward."
+        
+        topic_data_list = []
+        for topic in topics:
+            topic_key = topic.lower().replace(" ", "_")
+            if topic_key in RESEARCH_TOPICS:
+                topic_data_list.append(RESEARCH_TOPICS[topic_key])
+            else:
+                return {
+                    "ok": False,
+                    "error": f"Topic '{topic}' not found"
+                }
+        
+        # Generate synthesis
+        all_key_points = []
+        all_statistics = {}
+        all_experts = set()
+        all_case_studies = []
+        
+        for topic_data in topic_data_list:
+            all_key_points.extend(topic_data["key_points"])
+            all_statistics.update(topic_data["statistics"])
+            all_experts.update(topic_data["experts"])
+            all_case_studies.extend(topic_data["case_studies"])
+        
+        # Find common themes
+        common_themes = [
+            "Technological innovation driving growth",
+            "Significant market opportunities",
+            "Impact on global economy and society",
+            "Need for skilled professionals",
+            "Regulatory and policy considerations"
+        ]
+        
+        return {
+            "ok": True,
+            "data": {
+                "topics_synthesized": [td["topic"] for td in topic_data_list],
+                "total_key_points": len(all_key_points),
+                "total_statistics": len(all_statistics),
+                "total_experts": len(all_experts),
+                "total_case_studies": len(all_case_studies),
+                "common_themes": common_themes,
+                "cross_topic_insights": [
+                    f"All {len(topic_data_list)} topics show strong growth potential and significant market size.",
+                    f"Combined expertise across these fields includes {len(all_experts)} leading researchers and practitioners.",
+                    f"Case studies reveal {len(all_case_studies)} successful implementations across the topics.",
+                    f"Statistical analysis shows combined market value exceeding $500 billion.",
+                    f"Key challenges include talent acquisition, regulatory compliance, and technological integration."
+                ],
+                "recommendations": [
+                    f"Focus on areas where {len(topic_data_list)} topics intersect for maximum impact.",
+                    f"Leverage expertise from {len(all_experts)} identified experts for strategic guidance.",
+                    f"Study {len(all_case_studies)} case studies to understand best practices and lessons learned.",
+                    f"Monitor trends across all topics to identify emerging opportunities.",
+                    f"Develop integrated strategies that leverage synergies between topics."
+                ],
+                "synthesis_summary": f"This synthesis combines research from {len(topic_data_list)} major topics, "
+                                  f"incorporating {len(all_key_points)} key points, {len(all_statistics)} statistical metrics, "
+                                  f"insights from {len(all_experts)} experts, and analysis of {len(all_case_studies)} case studies. "
+                                  f"The comprehensive analysis reveals {len(common_themes)} common themes and provides "
+                                  f"{len(common_themes)} strategic recommendations for moving forward."
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing synthesize_research: {str(e)}"}
 
 
 # =====================================================
@@ -777,33 +805,36 @@ def calculate_compound_growth(initial_value: float, growth_rate: float, years: i
     Returns:
         Detailed calculation results including final value, total growth, and year-by-year breakdown.
     """
-    final_value = initial_value * ((1 + growth_rate) ** years)
-    total_growth = final_value - initial_value
-    growth_percentage = (total_growth / initial_value) * 100
-    
-    year_by_year = []
-    current_value = initial_value
-    for year in range(1, years + 1):
-        current_value = current_value * (1 + growth_rate)
-        year_by_year.append({
-            "year": year,
-            "value": round(current_value, 2),
-            "growth_this_year": round(current_value - (current_value / (1 + growth_rate)), 2)
-        })
-    
-    return {
-        "ok": True,
-        "calculation": {
-            "initial_value": initial_value,
-            "growth_rate": f"{growth_rate * 100:.2f}%",
-            "years": years,
-            "final_value": round(final_value, 2),
-            "total_growth": round(total_growth, 2),
-            "growth_percentage": round(growth_percentage, 2),
-            "year_by_year_breakdown": year_by_year,
-            "formula": f"Final = {initial_value} × (1 + {growth_rate})^{years} = {round(final_value, 2)}"
+    try:
+        final_value = initial_value * ((1 + growth_rate) ** years)
+        total_growth = final_value - initial_value
+        growth_percentage = (total_growth / initial_value) * 100
+        
+        year_by_year = []
+        current_value = initial_value
+        for year in range(1, years + 1):
+            current_value = current_value * (1 + growth_rate)
+            year_by_year.append({
+                "year": year,
+                "value": round(current_value, 2),
+                "growth_this_year": round(current_value - (current_value / (1 + growth_rate)), 2)
+            })
+        
+        return {
+            "ok": True,
+            "calculation": {
+                "initial_value": initial_value,
+                "growth_rate": f"{growth_rate * 100:.2f}%",
+                "years": years,
+                "final_value": round(final_value, 2),
+                "total_growth": round(total_growth, 2),
+                "growth_percentage": round(growth_percentage, 2),
+                "year_by_year_breakdown": year_by_year,
+                "formula": f"Final = {initial_value} × (1 + {growth_rate})^{years} = {round(final_value, 2)}"
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_compound_growth: {str(e)}"}
 
 
 @tool
@@ -819,31 +850,37 @@ def calculate_market_share(market_size: float, company_revenue: float, market_se
     Returns:
         Market share analysis with detailed breakdowns.
     """
-    market_share_percent = (company_revenue / market_size) * 100
-    
-    segment_analysis = []
-    if market_segments:
-        for segment in market_segments:
-            segment_name = segment.get("name", "Unknown")
-            segment_size = segment.get("size", 0)
-            segment_share = (segment_size / market_size) * 100
-            segment_analysis.append({
-                "segment": segment_name,
-                "size_billions": segment_size,
-                "market_share_percent": round(segment_share, 2)
-            })
-    
-    return {
-        "ok": True,
-        "analysis": {
-            "total_market_size_billions": market_size,
-            "company_revenue_billions": company_revenue,
-            "market_share_percent": round(market_share_percent, 2),
-            "remaining_market_billions": round(market_size - company_revenue, 2),
-            "segment_breakdown": segment_analysis,
-            "competitive_position": "dominant" if market_share_percent > 30 else "strong" if market_share_percent > 15 else "moderate" if market_share_percent > 5 else "niche"
+    try:
+        if market_size == 0:
+            return {"ok": False, "error": "Market size cannot be zero"}
+        
+        market_share_percent = (company_revenue / market_size) * 100
+        
+        segment_analysis = []
+        if market_segments:
+            for segment in market_segments:
+                segment_name = segment.get("name", "Unknown")
+                segment_size = segment.get("size", 0)
+                segment_share = (segment_size / market_size) * 100
+                segment_analysis.append({
+                    "segment": segment_name,
+                    "size_billions": segment_size,
+                    "market_share_percent": round(segment_share, 2)
+                })
+        
+        return {
+            "ok": True,
+            "analysis": {
+                "total_market_size_billions": market_size,
+                "company_revenue_billions": company_revenue,
+                "market_share_percent": round(market_share_percent, 2),
+                "remaining_market_billions": round(market_size - company_revenue, 2),
+                "segment_breakdown": segment_analysis,
+                "competitive_position": "dominant" if market_share_percent > 30 else "strong" if market_share_percent > 15 else "moderate" if market_share_percent > 5 else "niche"
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_market_share: {str(e)}"}
 
 
 @tool
@@ -859,53 +896,59 @@ def analyze_correlation(data_points: List[Dict[str, float]], variable1: str, var
     Returns:
         Correlation analysis with statistical measures.
     """
-    if not data_points:
-        return {"ok": False, "error": "No data points provided"}
-    
-    values1 = [dp.get(variable1, 0) for dp in data_points]
-    values2 = [dp.get(variable2, 0) for dp in data_points]
-    
-    if len(values1) != len(values2):
-        return {"ok": False, "error": "Mismatched data lengths"}
-    
-    n = len(values1)
-    mean1 = sum(values1) / n
-    mean2 = sum(values2) / n
-    
-    # Calculate correlation coefficient
-    numerator = sum((values1[i] - mean1) * (values2[i] - mean2) for i in range(n))
-    variance1 = sum((x - mean1) ** 2 for x in values1)
-    variance2 = sum((x - mean2) ** 2 for x in values2)
-    denominator = (variance1 * variance2) ** 0.5
-    
-    correlation = numerator / denominator if denominator > 0 else 0
-    
-    # Calculate additional statistics
-    min1, max1 = min(values1), max(values1)
-    min2, max2 = min(values2), max(values2)
-    
-    return {
-        "ok": True,
-        "correlation_analysis": {
-            "variable1": variable1,
-            "variable2": variable2,
-            "data_points": n,
-            "correlation_coefficient": round(correlation, 4),
-            "correlation_strength": "strong positive" if correlation > 0.7 else "moderate positive" if correlation > 0.3 else "weak positive" if correlation > 0 else "weak negative" if correlation > -0.3 else "moderate negative" if correlation > -0.7 else "strong negative",
-            "variable1_stats": {
-                "mean": round(mean1, 2),
-                "min": min1,
-                "max": max1,
-                "range": round(max1 - min1, 2)
-            },
-            "variable2_stats": {
-                "mean": round(mean2, 2),
-                "min": min2,
-                "max": max2,
-                "range": round(max2 - min2, 2)
+    try:
+        if not data_points:
+            return {"ok": False, "error": "No data points provided"}
+        
+        values1 = [dp.get(variable1, 0) for dp in data_points]
+        values2 = [dp.get(variable2, 0) for dp in data_points]
+        
+        if len(values1) != len(values2):
+            return {"ok": False, "error": "Mismatched data lengths"}
+        
+        n = len(values1)
+        if n == 0:
+            return {"ok": False, "error": "No valid data points"}
+        
+        mean1 = sum(values1) / n
+        mean2 = sum(values2) / n
+        
+        # Calculate correlation coefficient
+        numerator = sum((values1[i] - mean1) * (values2[i] - mean2) for i in range(n))
+        variance1 = sum((x - mean1) ** 2 for x in values1)
+        variance2 = sum((x - mean2) ** 2 for x in values2)
+        denominator = (variance1 * variance2) ** 0.5
+        
+        correlation = numerator / denominator if denominator > 0 else 0
+        
+        # Calculate additional statistics
+        min1, max1 = min(values1), max(values1)
+        min2, max2 = min(values2), max(values2)
+        
+        return {
+            "ok": True,
+            "correlation_analysis": {
+                "variable1": variable1,
+                "variable2": variable2,
+                "data_points": n,
+                "correlation_coefficient": round(correlation, 4),
+                "correlation_strength": "strong positive" if correlation > 0.7 else "moderate positive" if correlation > 0.3 else "weak positive" if correlation > 0 else "weak negative" if correlation > -0.3 else "moderate negative" if correlation > -0.7 else "strong negative",
+                "variable1_stats": {
+                    "mean": round(mean1, 2),
+                    "min": min1,
+                    "max": max1,
+                    "range": round(max1 - min1, 2)
+                },
+                "variable2_stats": {
+                    "mean": round(mean2, 2),
+                    "min": min2,
+                    "max": max2,
+                    "range": round(max2 - min2, 2)
+                }
             }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing analyze_correlation: {str(e)}"}
 
 
 @tool
@@ -928,46 +971,54 @@ def calculate_cost_benefit_analysis(
     Returns:
         Detailed CBA with NPV, ROI, payback period, etc.
     """
-    if len(annual_benefits) < years:
-        annual_benefits = annual_benefits + [annual_benefits[-1]] * (years - len(annual_benefits))
-    
-    npv = -initial_investment
-    discounted_benefits = []
-    cumulative_benefits = 0
-    payback_period = None
-    
-    for year in range(1, years + 1):
-        benefit = annual_benefits[year - 1]
-        discounted = benefit / ((1 + discount_rate) ** year)
-        discounted_benefits.append({
-            "year": year,
-            "benefit": benefit,
-            "discounted_benefit": round(discounted, 2),
-            "discount_factor": round(1 / ((1 + discount_rate) ** year), 4)
-        })
-        npv += discounted
-        cumulative_benefits += discounted
+    try:
+        if not annual_benefits:
+            return {"ok": False, "error": "Annual benefits list cannot be empty"}
+        if initial_investment == 0:
+            return {"ok": False, "error": "Initial investment cannot be zero"}
         
-        if payback_period is None and cumulative_benefits >= initial_investment:
-            payback_period = year
-    
-    total_benefits = sum(annual_benefits)
-    roi = ((total_benefits - initial_investment) / initial_investment) * 100
-    
-    return {
-        "ok": True,
-        "cba_results": {
-            "initial_investment": initial_investment,
-            "discount_rate": f"{discount_rate * 100:.2f}%",
-            "years": years,
-            "total_benefits": round(total_benefits, 2),
-            "net_present_value": round(npv, 2),
-            "roi_percent": round(roi, 2),
-            "payback_period_years": payback_period,
-            "year_by_year_analysis": discounted_benefits,
-            "recommendation": "proceed" if npv > 0 else "reconsider"
+        if len(annual_benefits) < years:
+            annual_benefits = annual_benefits + [annual_benefits[-1]] * (years - len(annual_benefits))
+        
+        npv = -initial_investment
+        discounted_benefits = []
+        cumulative_benefits = 0
+        payback_period = None
+        
+        for year in range(1, years + 1):
+            benefit = annual_benefits[year - 1]
+            discounted = benefit / ((1 + discount_rate) ** year)
+            discounted_benefits.append({
+                "year": year,
+                "benefit": benefit,
+                "discounted_benefit": round(discounted, 2),
+                "discount_factor": round(1 / ((1 + discount_rate) ** year), 4)
+            })
+            npv += discounted
+            cumulative_benefits += discounted
+            
+            if payback_period is None and cumulative_benefits >= initial_investment:
+                payback_period = year
+        
+        total_benefits = sum(annual_benefits)
+        roi = ((total_benefits - initial_investment) / initial_investment) * 100
+        
+        return {
+            "ok": True,
+            "cba_results": {
+                "initial_investment": initial_investment,
+                "discount_rate": f"{discount_rate * 100:.2f}%",
+                "years": years,
+                "total_benefits": round(total_benefits, 2),
+                "net_present_value": round(npv, 2),
+                "roi_percent": round(roi, 2),
+                "payback_period_years": payback_period,
+                "year_by_year_analysis": discounted_benefits,
+                "recommendation": "proceed" if npv > 0 else "reconsider"
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_cost_benefit_analysis: {str(e)}"}
 
 
 @tool
@@ -984,51 +1035,54 @@ def aggregate_statistics(data: List[Dict[str, Any]], group_by: str, metrics: Lis
     Returns:
         Aggregated statistics grouped by the specified field.
     """
-    if not data:
-        return {"ok": False, "error": "No data provided"}
-    
-    groups = {}
-    for record in data:
-        group_key = record.get(group_by, "unknown")
-        if group_key not in groups:
-            groups[group_key] = []
-        groups[group_key].append(record)
-    
-    aggregated = {}
-    numeric_fields = []
-    
-    # Find numeric fields
-    if data:
-        for key, value in data[0].items():
-            if isinstance(value, (int, float)) and key != group_by:
-                numeric_fields.append(key)
-    
-    for group_key, group_data in groups.items():
-        group_stats = {"count": len(group_data)}
+    try:
+        if not data:
+            return {"ok": False, "error": "No data provided"}
         
-        for field in numeric_fields:
-            values = [r.get(field, 0) for r in group_data if isinstance(r.get(field), (int, float))]
-            if values:
-                group_stats[field] = {
-                    "sum": round(sum(values), 2),
-                    "avg": round(sum(values) / len(values), 2),
-                    "min": min(values),
-                    "max": max(values),
-                    "count": len(values)
-                }
+        groups = {}
+        for record in data:
+            group_key = record.get(group_by, "unknown")
+            if group_key not in groups:
+                groups[group_key] = []
+            groups[group_key].append(record)
         
-        aggregated[group_key] = group_stats
-    
-    return {
-        "ok": True,
-        "aggregation": {
-            "group_by": group_by,
-            "total_groups": len(groups),
-            "total_records": len(data),
-            "grouped_statistics": aggregated,
-            "numeric_fields_analyzed": numeric_fields
+        aggregated = {}
+        numeric_fields = []
+        
+        # Find numeric fields
+        if data:
+            for key, value in data[0].items():
+                if isinstance(value, (int, float)) and key != group_by:
+                    numeric_fields.append(key)
+        
+        for group_key, group_data in groups.items():
+            group_stats = {"count": len(group_data)}
+            
+            for field in numeric_fields:
+                values = [r.get(field, 0) for r in group_data if isinstance(r.get(field), (int, float))]
+                if values:
+                    group_stats[field] = {
+                        "sum": round(sum(values), 2),
+                        "avg": round(sum(values) / len(values), 2),
+                        "min": min(values),
+                        "max": max(values),
+                        "count": len(values)
+                    }
+            
+            aggregated[group_key] = group_stats
+        
+        return {
+            "ok": True,
+            "aggregation": {
+                "group_by": group_by,
+                "total_groups": len(groups),
+                "total_records": len(data),
+                "grouped_statistics": aggregated,
+                "numeric_fields_analyzed": numeric_fields
+            }
         }
-    }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing aggregate_statistics: {str(e)}"}
 
 
 analysis_tools = [
@@ -1053,14 +1107,19 @@ def calculate_discount_factor(discount_rate: float, year: int) -> Dict[str, Any]
     Returns:
         Discount factor and calculation details
     """
-    discount_factor = 1 / ((1 + discount_rate) ** year)
-    return {
-        "ok": True,
-        "discount_factor": round(discount_factor, 6),
-        "discount_rate": discount_rate,
-        "year": year,
-        "formula": f"1 / (1 + {discount_rate})^{year} = {round(discount_factor, 6)}"
-    }
+    try:
+        if year <= 0:
+            return {"ok": False, "error": "Year must be greater than 0"}
+        discount_factor = 1 / ((1 + discount_rate) ** year)
+        return {
+            "ok": True,
+            "discount_factor": round(discount_factor, 6),
+            "discount_rate": discount_rate,
+            "year": year,
+            "formula": f"1 / (1 + {discount_rate})^{year} = {round(discount_factor, 6)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_discount_factor: {str(e)}"}
 
 
 @tool
@@ -1077,17 +1136,22 @@ def calculate_present_value(future_value: float, discount_rate: float, year: int
     Returns:
         Present value and calculation details
     """
-    discount_factor = 1 / ((1 + discount_rate) ** year)
-    present_value = future_value * discount_factor
-    return {
-        "ok": True,
-        "present_value": round(present_value, 2),
-        "future_value": future_value,
-        "discount_rate": discount_rate,
-        "year": year,
-        "discount_factor": round(discount_factor, 6),
-        "formula": f"{future_value} / (1 + {discount_rate})^{year} = {round(present_value, 2)}"
-    }
+    try:
+        if year <= 0:
+            return {"ok": False, "error": "Year must be greater than 0"}
+        discount_factor = 1 / ((1 + discount_rate) ** year)
+        present_value = future_value * discount_factor
+        return {
+            "ok": True,
+            "present_value": round(present_value, 2),
+            "future_value": future_value,
+            "discount_rate": discount_rate,
+            "year": year,
+            "discount_factor": round(discount_factor, 6),
+            "formula": f"{future_value} / (1 + {discount_rate})^{year} = {round(present_value, 2)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_present_value: {str(e)}"}
 
 
 @tool
@@ -1103,16 +1167,19 @@ def calculate_percentage(value: float, total: float) -> Dict[str, Any]:
     Returns:
         Percentage and calculation details
     """
-    if total == 0:
-        return {"ok": False, "error": "Cannot divide by zero"}
-    percentage = (value / total) * 100
-    return {
-        "ok": True,
-        "percentage": round(percentage, 2),
-        "value": value,
-        "total": total,
-        "formula": f"({value} / {total}) × 100 = {round(percentage, 2)}%"
-    }
+    try:
+        if total == 0:
+            return {"ok": False, "error": "Cannot divide by zero"}
+        percentage = (value / total) * 100
+        return {
+            "ok": True,
+            "percentage": round(percentage, 2),
+            "value": value,
+            "total": total,
+            "formula": f"({value} / {total}) × 100 = {round(percentage, 2)}%"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_percentage: {str(e)}"}
 
 
 @tool
@@ -1128,27 +1195,30 @@ def calculate_weighted_average(values: List[float], weights: List[float]) -> Dic
     Returns:
         Weighted average and calculation details
     """
-    if len(values) != len(weights):
-        return {"ok": False, "error": "Values and weights must have same length"}
-    if len(values) == 0:
-        return {"ok": False, "error": "Empty lists"}
-    
-    weighted_sum = sum(v * w for v, w in zip(values, weights))
-    total_weight = sum(weights)
-    
-    if total_weight == 0:
-        return {"ok": False, "error": "Total weight cannot be zero"}
-    
-    weighted_avg = weighted_sum / total_weight
-    
-    return {
-        "ok": True,
-        "weighted_average": round(weighted_avg, 4),
-        "weighted_sum": round(weighted_sum, 2),
-        "total_weight": round(total_weight, 2),
-        "components": [{"value": v, "weight": w, "contribution": round(v * w, 2)} for v, w in zip(values, weights)],
-        "formula": f"Σ(value × weight) / Σ(weights) = {round(weighted_sum, 2)} / {round(total_weight, 2)} = {round(weighted_avg, 4)}"
-    }
+    try:
+        if len(values) != len(weights):
+            return {"ok": False, "error": "Values and weights must have same length"}
+        if len(values) == 0:
+            return {"ok": False, "error": "Empty lists"}
+        
+        weighted_sum = sum(v * w for v, w in zip(values, weights))
+        total_weight = sum(weights)
+        
+        if total_weight == 0:
+            return {"ok": False, "error": "Total weight cannot be zero"}
+        
+        weighted_avg = weighted_sum / total_weight
+        
+        return {
+            "ok": True,
+            "weighted_average": round(weighted_avg, 4),
+            "weighted_sum": round(weighted_sum, 2),
+            "total_weight": round(total_weight, 2),
+            "components": [{"value": v, "weight": w, "contribution": round(v * w, 2)} for v, w in zip(values, weights)],
+            "formula": f"Σ(value × weight) / Σ(weights) = {round(weighted_sum, 2)} / {round(total_weight, 2)} = {round(weighted_avg, 4)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_weighted_average: {str(e)}"}
 
 
 @tool
@@ -1164,16 +1234,19 @@ def calculate_ratio(numerator: float, denominator: float) -> Dict[str, Any]:
     Returns:
         Ratio and calculation details
     """
-    if denominator == 0:
-        return {"ok": False, "error": "Cannot divide by zero"}
-    ratio = numerator / denominator
-    return {
-        "ok": True,
-        "ratio": round(ratio, 4),
-        "numerator": numerator,
-        "denominator": denominator,
-        "formula": f"{numerator} / {denominator} = {round(ratio, 4)}"
-    }
+    try:
+        if denominator == 0:
+            return {"ok": False, "error": "Cannot divide by zero"}
+        ratio = numerator / denominator
+        return {
+            "ok": True,
+            "ratio": round(ratio, 4),
+            "numerator": numerator,
+            "denominator": denominator,
+            "formula": f"{numerator} / {denominator} = {round(ratio, 4)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_ratio: {str(e)}"}
 
 
 @tool
@@ -1189,14 +1262,17 @@ def calculate_power(base: float, exponent: float) -> Dict[str, Any]:
     Returns:
         Power result and calculation details
     """
-    result = base ** exponent
-    return {
-        "ok": True,
-        "result": round(result, 6),
-        "base": base,
-        "exponent": exponent,
-        "formula": f"{base}^{exponent} = {round(result, 6)}"
-    }
+    try:
+        result = base ** exponent
+        return {
+            "ok": True,
+            "result": round(result, 6),
+            "base": base,
+            "exponent": exponent,
+            "formula": f"{base}^{exponent} = {round(result, 6)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_power: {str(e)}"}
 
 
 @tool
@@ -1211,14 +1287,19 @@ def calculate_sum(values: List[float]) -> Dict[str, Any]:
     Returns:
         Sum and calculation details
     """
-    total = sum(values)
-    return {
-        "ok": True,
-        "sum": round(total, 2),
-        "values": values,
-        "count": len(values),
-        "formula": f"Sum of {len(values)} values = {round(total, 2)}"
-    }
+    try:
+        if not values:
+            return {"ok": False, "error": "Values list cannot be empty"}
+        total = sum(values)
+        return {
+            "ok": True,
+            "sum": round(total, 2),
+            "values": values,
+            "count": len(values),
+            "formula": f"Sum of {len(values)} values = {round(total, 2)}"
+        }
+    except Exception as e:
+        return {"ok": False, "error": f"Error executing calculate_sum: {str(e)}"}
 
 
 calculation_tools = [
@@ -1256,8 +1337,10 @@ def general_research(topic: str, depth: str = "comprehensive") -> Dict[str, Any]
     Returns:
         Detailed research information including key points, statistics, experts, and case studies.
     """
-    # Alias to research_topic
-    return research_topic(topic, depth)
+    # Call the underlying implementation directly
+    return _research_topic_impl(topic, depth)
+
+
 
 
 def create_deep_research_tool(researcher_subgraph):
@@ -1356,6 +1439,7 @@ def think_tool(
 def store_deliverable(
     deliverable_key: str, 
     value: str, 
+    tool_call_id: Annotated[str, InjectedToolCallId],
     runtime: ToolRuntime = None  # ToolRuntime parameter is not visible to the model
 ) -> Command:
     """
@@ -1378,9 +1462,14 @@ def store_deliverable(
     }
     
     # Return Command to update state with deliverables using override pattern
+    # Must include ToolMessage when returning Command
     return Command(
         update={
-            "deliverables": {"type": "override", "value": updated_deliverables}
+            "deliverables": {"type": "override", "value": updated_deliverables},
+            "reseacher_messages": [ToolMessage(
+                content=f"Deliverable '{deliverable_key}' stored successfully.",
+                tool_call_id=tool_call_id
+            )]
         }
     )
 
@@ -1395,7 +1484,7 @@ def finish(
     
     Args:
         findings: A string summarizing the findings and calculations used to reach the answer.
-                 Should include key findings, calculation methods, formulas, and data sources.
+                  Should include key findings, calculation methods, formulas, and data sources.
     
     Returns:
         JSON object containing the original question and the summary of findings.
@@ -1411,6 +1500,19 @@ def finish(
         "task": query,
         "findings": findings 
     }
+
+
+@tool
+def research_complete(
+    runtime: ToolRuntime = None  # ToolRuntime parameter is not visible to the model
+) -> str:
+    """
+    Indicate that research is complete and ready for final report generation.
+    
+    Call this tool when you have gathered all necessary research and all key deliverables
+    have been resolved. This will transition the workflow to final report generation.
+    """
+    return "Research complete. Ready for final report generation."
 
 
 # Standard tools (without reflection)
