@@ -41,13 +41,14 @@ def recall_accuracy_evaluator_agent(inputs: Dict[str, Any], outputs: Dict[str, A
     correct_count = 0
     
     for i in range(1, len(expected_answers) + 1):
-        expected = expected_answers.get(str(i))
-        if expected:
-            actual_value = answers.get(str(i))
-            is_correct = compare_values(actual_value, expected)
-            if is_correct:
-                correct_count += 1
-            comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
+        # Try both string and integer keys for expected_answers (test data uses integer keys)
+        expected = expected_answers.get(i) or expected_answers.get(str(i))
+        # Answers from JSON are typically string keys
+        actual_value = answers.get(str(i)) or answers.get(i)
+        is_correct = compare_values(actual_value, expected) if expected else False
+        if is_correct:
+            correct_count += 1
+        comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
     
     accuracy = correct_count / len(expected_answers) if expected_answers else 0.0
     comment = f"{correct_count}/{len(expected_answers)} correct\n" + "\n".join(comparisons)
@@ -69,13 +70,13 @@ def recall_accuracy_evaluator_graph(inputs: Dict[str, Any], outputs: Dict[str, A
     correct_count = 0
     
     for i in range(1, len(expected_answers) + 1):
-        expected = expected_answers.get(str(i))
-        if expected:
-            actual_value = answers.get(str(i))
-            is_correct = compare_values(actual_value, expected)
-            if is_correct:
-                correct_count += 1
-            comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
+        # Try both string and integer keys
+        expected = expected_answers.get(str(i)) or expected_answers.get(i)
+        actual_value = answers.get(str(i)) or answers.get(i)
+        is_correct = compare_values(actual_value, expected) if expected else False
+        if is_correct:
+            correct_count += 1
+        comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
     
     accuracy = correct_count / len(expected_answers) if expected_answers else 0.0
     comment = f"{correct_count}/{len(expected_answers)} correct\n" + "\n".join(comparisons)

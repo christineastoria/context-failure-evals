@@ -16,7 +16,7 @@ from context_distraction.tests.evaluators import (
 load_dotenv()
 
 
-async def run_graph_agent(inputs: dict, stream_output: bool = False) -> dict:
+async def run_graph_agent(inputs: dict) -> dict:
     """Run graph agent and extract outputs using streaming to capture trajectory."""
     query = inputs["query"]
     trajectory = []
@@ -93,7 +93,7 @@ async def run_experiment(dataset_name: str):
         The experiment result from LangSmith aevaluate
     """
     return await aevaluate(
-        lambda inputs: run_graph_agent(inputs, stream_output=False),
+        lambda inputs: run_graph_agent(inputs),
         data=dataset_name,
         evaluators=[
             recall_accuracy_evaluator_graph,
@@ -106,44 +106,40 @@ async def run_experiment(dataset_name: str):
     )
 
 
-async def run_local_test(task_index: int = 0):
+async def run_local_test():
     """
     Run a local test with streaming output for debugging.
-    
-    Args:
-        task_index: Index of the task to test (default: 0, which is the slim test)
+    Always uses test case 1 (index 0).
     """
-    task = TEST_TASKS[task_index]
+    task = TEST_TASKS[0]  # Always use test case 1
     reference_outputs = build_reference_outputs(task)
     
-    print(f"\n{'='*80}")
-    print(f"LOCAL TEST - Task {task_index + 1}")
-    print(f"{'='*80}\n")
+    print("LOCAL TEST - Task 1", flush=True)
     
     # Run agent with streaming
     inputs = {"query": task["query"]}
-    outputs = await run_graph_agent(inputs, stream_output=True)
+    outputs = await run_graph_agent(inputs)
     
     # Run evaluators locally
-    print(f"\n{'='*80}")
-    print("EVALUATION RESULTS")
-    print(f"{'='*80}\n")
+    print(f"\n{'='*80}", flush=True)
+    print("EVALUATION RESULTS", flush=True)
+    print(f"{'='*80}\n", flush=True)
     
     recall_result = recall_accuracy_evaluator_graph(inputs, outputs, reference_outputs)
-    print(f"Recall Accuracy: {recall_result['score']:.2%}")
-    print(f"{recall_result['comment']}\n")
+    print(f"Recall Accuracy: {recall_result['score']:.2%}", flush=True)
+    print(f"{recall_result['comment']}\n", flush=True)
     
     completeness_result = tool_call_completeness_evaluator(inputs, outputs, reference_outputs)
-    print(f"Tool Call Completeness: {completeness_result['score']:.2%}")
-    print(f"{completeness_result['comment']}\n")
+    print(f"Tool Call Completeness: {completeness_result['score']:.2%}", flush=True)
+    print(f"{completeness_result['comment']}\n", flush=True)
     
     efficiency_result = tool_call_efficiency_evaluator(inputs, outputs, reference_outputs)
     print(f"Tool Call Efficiency: {efficiency_result['score']:.2%}")
-    print(f"{efficiency_result['comment']}\n")
+    print(f"{efficiency_result['comment']}\n", flush=True)
     
-    print(f"\n{'='*80}")
-    print("FINAL RESPONSE")
-    print(f"{'='*80}\n")
+    print(f"\n{'='*80}", flush=True)
+    print("FINAL RESPONSE", flush=True)
+    print(f"{'='*80}\n", flush=True)
     print(outputs["final_response"][:500] + "..." if len(outputs["final_response"]) > 500 else outputs["final_response"])
     
     return outputs
@@ -164,7 +160,6 @@ if __name__ == "__main__":
         graph_experiment = asyncio.run(run_experiment(dataset_name))
         print(f"\nGraph experiment completed: {graph_experiment}")
     else:
-        # Run local test with streaming
-        task_index = int(sys.argv[1]) if len(sys.argv) > 1 else 0
-        asyncio.run(run_local_test(task_index))
+        # Run local test with streaming (always uses test case 1)
+        asyncio.run(run_local_test())
 
