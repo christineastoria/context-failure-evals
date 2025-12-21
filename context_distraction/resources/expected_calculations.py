@@ -2,13 +2,13 @@
 Expected calculations for context distraction evaluation.
 
 This file defines deterministic expected values for all calculations used in test tasks.
-All values are derived from BASE_FACTS which must match mock_research_data.py.
+All values are derived from BASE_FACTS which must match synthetic_data.py.
 """
 
 # ============================================================================
 # BASE DATA
 # ============================================================================
-# Base facts from research data - must match mock_research_data.py exactly
+# Base facts from research data - must match synthetic_data.py exactly
 BASE_FACTS = {
     "renewable_energy": {
         "capacity_gw": 3372,

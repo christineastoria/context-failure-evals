@@ -61,6 +61,8 @@ Available tools include:
 - Atomic math tools: `calculate_discount_factor`, `calculate_present_value`, `calculate_percentage`, `calculate_weighted_average`, `calculate_ratio`, `calculate_power`, `calculate_sum`
 
 You may use any combination of these tools in whatever order makes sense for your research process. You can use high-level calculation tools for efficiency, or break down complex calculations into atomic steps using the math tools.
+Notably, important information may be contained in the case studies, experts, and statistics reports.
+
 
 Key Requirements:
 - ACCURACY: Record exact numbers, percentages, and statistics. Do not approximate.

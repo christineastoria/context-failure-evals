@@ -5,10 +5,12 @@ Each tool call returns detailed information designed to fill context
 and test the agent's ability to recall specific details across many steps.
 """
 
-from context_distraction.resources.mock_research_data import (
+from context_distraction.resources.synthetic_data import (
     RESEARCH_TOPICS,
     EXPERT_OPINIONS,
-    CASE_STUDIES
+    CASE_STUDIES,
+    EXPERT_SUMMARIES,
+    CASE_STUDY_SUMMARIES
 )
 from langchain_core.tools import tool
 from typing import Dict, Any, List, Optional
@@ -73,8 +75,9 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     verbose_summary += f"""
     
     STATISTICAL OVERVIEW:
-    The research has identified {len(topic_data['statistics'])} key statistical metrics that provide quantitative insights 
-    into the current state and trajectory of {topic_data['topic']}. These metrics have been carefully validated through 
+    The research has identified multiple key statistical metrics that provide quantitative insights 
+    into the current state and trajectory of {topic_data['topic']}. For detailed statistical data, 
+    please use the get_statistics() tool with this topic. These metrics have been carefully validated through 
     multiple data sources and represent the most current and accurate information available. Each statistic tells a story 
     about market dynamics, growth patterns, investment trends, and technological maturity.
     
@@ -84,11 +87,27 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     collective insights provide a comprehensive view of current challenges, opportunities, and future directions. Each expert 
     brings decades of experience and deep domain knowledge that enriches our understanding of the field.
     
+    Available Experts:
+    """
+    for expert_id in topic_data['experts']:
+        if expert_id in EXPERT_SUMMARIES:
+            verbose_summary += f"\n    {EXPERT_SUMMARIES[expert_id]}\n"
+    
+    verbose_summary += f"""
+    
     CASE STUDY RECOMMENDATIONS:
     {len(topic_data['case_studies'])} relevant case studies have been identified that illustrate key principles, successful 
     implementations, and lessons learned in {topic_data['topic']}. These case studies span multiple geographies, scales, 
     and contexts, providing valuable real-world examples of how theoretical concepts translate into practical applications. 
     Each case study offers unique insights into implementation challenges, success factors, and measurable outcomes.
+    
+    Available Case Studies:
+    """
+    for case_id in topic_data['case_studies']:
+        if case_id in CASE_STUDY_SUMMARIES:
+            verbose_summary += f"\n    {CASE_STUDY_SUMMARIES[case_id]}\n"
+    
+    verbose_summary += f"""
     
     METHODOLOGY AND DATA SOURCES:
     This research employed a rigorous multi-method approach combining quantitative analysis, qualitative expert interviews, 
@@ -109,15 +128,33 @@ def research_topic(topic: str, depth: str = "comprehensive") -> Dict[str, Any]:
     rapidly evolving field.
     """
     
+    # Build expert summaries list
+    expert_summaries_list = []
+    for expert_id in topic_data['experts']:
+        if expert_id in EXPERT_SUMMARIES:
+            expert_summaries_list.append({
+                "expert_id": expert_id,
+                "summary": EXPERT_SUMMARIES[expert_id]
+            })
+    
+    # Build case study summaries list
+    case_study_summaries_list = []
+    for case_id in topic_data['case_studies']:
+        if case_id in CASE_STUDY_SUMMARIES:
+            case_study_summaries_list.append({
+                "case_study_id": case_id,
+                "summary": CASE_STUDY_SUMMARIES[case_id]
+            })
+    
     return {
         "ok": True,
         "data": {
             "topic": topic_data["topic"],
             "research_depth": depth,
             "key_points": key_points,
-            "statistics": topic_data["statistics"],
-            "expert_recommendations": topic_data["experts"],
-            "case_study_recommendations": topic_data["case_studies"],
+            # Note: Statistics are NOT included here - use get_statistics() tool for detailed metrics
+            "expert_summaries": expert_summaries_list,  # Verbose summaries with IDs for calling get_expert_opinion
+            "case_study_summaries": case_study_summaries_list,  # Verbose summaries with IDs for calling get_case_study
             "summary": verbose_summary,
             "detailed_analysis": verbose_summary  # Duplicate for extra verbosity
         }
@@ -809,8 +846,7 @@ def calculate_market_share(market_size: float, company_revenue: float, market_se
 def analyze_correlation(data_points: List[Dict[str, float]], variable1: str, variable2: str) -> Dict[str, Any]:
     """
     Perform correlation analysis between two variables across multiple data points.
-    Like SQL analysis - requires aggregating and calculating relationships.
-    
+
     Args:
         data_points: List of dictionaries with data points
         variable1: First variable name to analyze

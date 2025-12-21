@@ -23,7 +23,6 @@ from context_distraction.resources.validation_utils import (
     extract_calculations_json,
     get_value_from_calculations,
     compare_values,
-    check_consistency_with_llm,
     generate_expected_tool_calls,
     compare_tool_calls,
 )
@@ -127,39 +126,6 @@ def recall_accuracy_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], r
         "key": "recall_accuracy",
         "score": accuracy,
         "comment": comment,
-    }
-
-def consistency_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Evaluate consistency between markdown and JSON."""
-    final_response = outputs.get("final_response", "")
-    calculations_data = extract_calculations_json(final_response)
-    result = check_consistency_with_llm(final_response, calculations_data)
-    
-    # Build detailed comment with specific examples
-    comment_parts = []
-    if result['is_consistent']:
-        comment_parts.append("Consistent")
-    else:
-        comment_parts.append(f"Inconsistent: {len(result.get('inconsistencies', []))} conflicts found")
-    
-    # Add specific examples
-    examples = result.get('specific_examples', [])
-    if examples:
-        comment_parts.append("\nSpecific conflicts:")
-        for i, ex in enumerate(examples[:5], 1):  # Limit to first 5 for readability
-            comment_parts.append(f"{i}. {ex.get('field_name', 'unknown')}: markdown={ex.get('markdown_value', 'N/A')}, json={ex.get('json_value', 'N/A')}")
-        if len(examples) > 5:
-            comment_parts.append(f"... and {len(examples) - 5} more")
-    
-    # Add reasoning summary (first 200 chars)
-    reasoning = result.get('reasoning', '')
-    if reasoning:
-        comment_parts.append(f"\nReasoning: {reasoning[:200]}...")
-    
-    return {
-        "key": "consistency_score",
-        "score": result['score'],
-        "comment": "\n".join(comment_parts),
     }
 
 def tool_call_completeness_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -299,7 +265,6 @@ experiment = evaluate(
     data=dataset_name,
     evaluators=[
         recall_accuracy_evaluator,
-        consistency_evaluator,
         tool_call_completeness_evaluator,
         tool_call_efficiency_evaluator,
     ],
