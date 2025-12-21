@@ -59,26 +59,24 @@ IMPORTANT: Your analysis must answer these specific questions:
 {recall_questions}
 
 CRITICAL OUTPUT FORMAT:
-Your final response MUST be valid Markdown with a JSON section at the end containing ALL calculated values in this exact structure:
+Your final response MUST be valid Markdown with a JSON section at the end containing the answers to all questions in this exact structure:
 ```json
 {{
-  "calculations": {{
-    "renewable_energy": {{
-      "base_facts": {{"capacity_gw": <number>, "market_size_billions": <number>}},
-      "compound_growth_10yr": <number>,
-      "cba_10pct": {{"npv": <number>, "roi": <number>}},
-      "correlation_market_size_vs_growth": <number>,
-      "risk_adjusted_npv": <number>,
-      "weighted_investment_score": <number>,
-      "investment_priority_rank": <number>,
-      "strategic_priority_rank": <number>
-    }},
-    ...
+  "answers": {{
+    "1": <answer to question 1>,
+    "2": <answer to question 2>,
+    "3": <answer to question 3>,
+    "4": <answer to question 4>,
+    "5": <answer to question 5>,
+    "6": <answer to question 6>,
+    "7": <answer to question 7>,
+    "8": <answer to question 8>,
+    "9": <answer to question 9>
   }}
 }}
 ```
 
-Be thorough and ensure all calculations are accurate and complete."""
+Be thorough and ensure all answers are accurate and complete."""
 
 # Test task variations - each focuses on different primary domains with diverse Q5-Q9
 TEST_TASKS = [
@@ -93,16 +91,15 @@ TEST_TASKS = [
                 "1. What was the global installed capacity in gigawatts for renewable energy?",
                 "2. What is the global AI market size in billions of USD?",
                 "3. What was the calculated 10-year compound growth final value for renewable energy?",
-                "4. What was the NPV calculated for renewable energy CBA with 10% discount rate?",
+                "4. What was the NPV calculated for the renewable energy cost-benefit analysis project with 10% discount rate?",
                 "5. What correlation coefficient was calculated between market size and growth rate across all domains?",
-                "6. What is the ratio of renewable energy NPV to artificial intelligence NPV (both at 10% discount)?",
-                "7. What is the present value of year 5 benefits for renewable energy at 10% discount rate?",
+                "6. What is the ratio of renewable energy cost-benefit analysis NPV to artificial intelligence cost-benefit analysis NPV (both at 10% discount rate)?",
+                "7. What is the present value of year 5 benefits for the renewable energy cost-benefit analysis project at 10% discount rate?",
                 "8. What percentage of total market size across all domains does renewable energy represent?",
-                "9. What is the weighted average of NPVs across all domains, weighted by investment amounts?",
+                "9. What is the weighted average of cost-benefit analysis NPVs across all domains, weighted by investment amounts?",
             ]),
         ),
         "topics": topics_all,
-        "expected_steps": 60,
         "recall_questions": [
             f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_primary_domain_base_fact('renewable_energy')} GW)",
             f"What is the global AI market size in billions of USD? (Expected: {get_secondary_domain_base_fact('artificial_intelligence')} billion)",
@@ -142,16 +139,15 @@ TEST_TASKS = [
                 "1. What was the battery cost per kWh for electric vehicles?",
                 "2. What is the global biotechnology market size in billions of USD?",
                 "3. What was the calculated 10-year compound growth final value for electric vehicles?",
-                "4. What was the NPV calculated for electric vehicles CBA with 10% discount rate?",
+                "4. What was the NPV calculated for the electric vehicles cost-benefit analysis project with 10% discount rate?",
                 "5. What was the investment priority ranking for electric vehicles among all domains based on weighted scores?",
-                "6. What is the difference between electric vehicles NPV and biotechnology NPV (both at 10% discount)?",
-                "7. What is the ratio of electric vehicles ROI to biotechnology ROI (both at 10% discount)?",
+                "6. What is the difference between electric vehicles cost-benefit analysis NPV and biotechnology cost-benefit analysis NPV (both at 10% discount rate)?",
+                "7. What is the ratio of electric vehicles cost-benefit analysis ROI to biotechnology cost-benefit analysis ROI (both at 10% discount rate)?",
                 "8. What is the sum of all domain investments in billions USD?",
                 "9. What is the growth multiple (compound_growth_10yr / market_size) for electric vehicles raised to the power of 2?",
             ]),
         ),
         "topics": topics_all,
-        "expected_steps": 75,
         "recall_questions": [
             f"What was the battery cost per kWh for electric vehicles? (Expected: {get_primary_domain_base_fact('electric_vehicles')} $/kWh)",
             f"What is the global biotechnology market size in billions of USD? (Expected: {get_secondary_domain_base_fact('biotechnology')} billion)",
@@ -191,16 +187,15 @@ TEST_TASKS = [
                 "1. What was the number of qubits for quantum computing?",
                 "2. What is the global AI market size in billions of USD?",
                 "3. What was the calculated 10-year compound growth final value for quantum computing?",
-                "4. What was the NPV calculated for quantum computing CBA with 10% discount rate?",
-                "5. What was the risk-adjusted NPV for quantum computing?",
+                "4. What was the NPV calculated for the quantum computing cost-benefit analysis project with 10% discount rate?",
+                "5. What was the risk-adjusted NPV for quantum computing based on the cost-benefit analysis project?",
                 "6. What is the weighted average growth rate across all domains, weighted by market size?",
                 "7. What is the discount factor for year 7 at 10% discount rate?",
                 "8. What was the strategic priority ranking for quantum computing among all domains in your final analysis?",
-                "9. What is the ratio of quantum computing NPV to artificial intelligence NPV (both at 10% discount)?",
+                "9. What is the ratio of quantum computing cost-benefit analysis NPV to artificial intelligence cost-benefit analysis NPV (both at 10% discount rate)?",
             ]),
         ),
         "topics": topics_all,
-        "expected_steps": 78,
         "recall_questions": [
             f"What was the number of qubits for quantum computing? (Expected: {get_primary_domain_base_fact('quantum_computing')} qubits)",
             f"What is the global AI market size in billions of USD? (Expected: {get_secondary_domain_base_fact('artificial_intelligence')} billion)",
@@ -240,16 +235,15 @@ TEST_TASKS = [
                 "1. What is the global biotechnology market size in billions of USD?",
                 "2. What was the global installed capacity in gigawatts for renewable energy?",
                 "3. What was the calculated 10-year compound growth final value for biotechnology?",
-                "4. What was the NPV calculated for biotechnology CBA with 10% discount rate?",
+                "4. What was the NPV calculated for the biotechnology cost-benefit analysis project with 10% discount rate?",
                 "5. What was the weighted investment score calculated for biotechnology based on comparison across all domains?",
-                "6. What is the present value of year 5 benefits for biotechnology at 10% discount rate?",
+                "6. What is the present value of year 5 benefits for the biotechnology cost-benefit analysis project at 10% discount rate?",
                 "7. What percentage of total market size across all domains does biotechnology represent?",
-                "8. What is the weighted average of NPVs across all domains, weighted by investment amounts?",
+                "8. What is the weighted average of cost-benefit analysis NPVs across all domains, weighted by investment amounts?",
                 "9. What is the growth multiple (compound_growth_10yr / market_size) for biotechnology raised to the power of 2?",
             ]),
         ),
         "topics": topics_all,
-        "expected_steps": 90,
         "recall_questions": [
             f"What is the global biotechnology market size in billions of USD? (Expected: {get_primary_domain_base_fact('biotechnology')} billion)",
             f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_secondary_domain_base_fact('renewable_energy')} GW)",

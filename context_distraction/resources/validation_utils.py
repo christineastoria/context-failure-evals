@@ -13,75 +13,49 @@ from langchain_openai import ChatOpenAI
 from typing import TypedDict, Annotated
 
 
-def extract_calculations_json(response: str) -> Dict[str, Any]:
-    """
-    Extract calculations JSON from markdown response.
+def extract_tool_calls_from_message(msg: Any) -> List[Dict[str, Any]]:
+    """Extract tool calls from a message (dict or AIMessage object)."""
+    tool_calls = []
     
-    Returns empty dict if JSON is missing or invalid (format validation handled by JSON parsing).
+    # Handle dict messages
+    if isinstance(msg, dict) and msg.get("type") == "ai":
+        if "tool_calls" in msg and msg["tool_calls"]:
+            for tc in msg["tool_calls"]:
+                tool_name = tc.get("name", "") if isinstance(tc, dict) else getattr(tc, "name", "")
+                tool_args = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
+                tool_calls.append({"name": tool_name, "args": tool_args})
+    # Handle AIMessage objects
+    elif hasattr(msg, 'tool_calls') and msg.tool_calls:
+        for tc in msg.tool_calls:
+            tool_name = tc.name if hasattr(tc, 'name') else (tc.get("name", "") if isinstance(tc, dict) else "")
+            tool_args = tc.args if hasattr(tc, 'args') else (tc.get("args", {}) if isinstance(tc, dict) else {})
+            tool_calls.append({"name": tool_name, "args": tool_args})
+    
+    return tool_calls
+
+
+def extract_answers_json(response: str) -> Dict[str, Any]:
+    """
+    Extract answers JSON from markdown response.
+    Expected format: {"answers": {"1": <answer>, "2": <answer>, ...}}
+    
+    Returns empty dict if JSON is missing or invalid.
     """
     # Try to find JSON code block first
     json_match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
     if not json_match:
-        # Try to find JSON starting with {"calculations" - match until balanced braces
-        json_match = re.search(r'(\{"calculations".*?\})', response, re.DOTALL)
+        # Try to find JSON starting with {"answers" - match until balanced braces
+        json_match = re.search(r'(\{"answers".*?\})', response, re.DOTALL)
     
     if json_match:
         try:
             json_str = json_match.group(1)
-            # Try to parse the JSON
             data = json.loads(json_str)
-            return data.get("calculations", {})
+            if "answers" in data:
+                return data["answers"]
         except json.JSONDecodeError:
             pass
     return {}
-
-
-def get_value_from_calculations(
-    calculations_data: Dict[str, Any],
-    question_index: int,
-    primary_domain: str = "renewable_energy",
-    secondary_domain: str = "artificial_intelligence"
-) -> Optional[Any]:
-    """
-    Extract a specific value from calculations JSON based on question index.
-    
-    Question mapping:
-    1: Primary domain base fact (capacity_gw or market_size_billions)
-    2: Secondary domain base fact (market_size_billions or capacity_gw)
-    3: Primary domain compound_growth_10yr
-    4: Primary domain CBA NPV (cba_10pct.npv)
-    5: Primary domain correlation_market_size_vs_growth
-    6: Primary domain investment_priority_rank
-    7: Primary domain risk_adjusted_npv
-    8: Primary domain weighted_investment_score
-    9: Primary domain strategic_priority_rank
-    """
-    domain_data = calculations_data.get(primary_domain, {})
-    
-    if question_index == 1:
-        base_facts = domain_data.get("base_facts", {})
-        return base_facts.get("capacity_gw") or base_facts.get("market_size_billions")
-    elif question_index == 2:
-        secondary_data = calculations_data.get(secondary_domain, {})
-        base_facts = secondary_data.get("base_facts", {})
-        return base_facts.get("market_size_billions") or base_facts.get("capacity_gw")
-    elif question_index == 3:
-        return domain_data.get("compound_growth_10yr")
-    elif question_index == 4:
-        cba = domain_data.get("cba_10pct", {})
-        return cba.get("npv") if isinstance(cba, dict) else None
-    elif question_index == 5:
-        return domain_data.get("correlation_market_size_vs_growth")
-    elif question_index == 6:
-        return domain_data.get("investment_priority_rank")
-    elif question_index == 7:
-        return domain_data.get("risk_adjusted_npv")
-    elif question_index == 8:
-        return domain_data.get("weighted_investment_score")
-    elif question_index == 9:
-        return domain_data.get("strategic_priority_rank")
-    
-    return None
 
 
 def compare_values(actual_value: Any, expected_value: str, tolerance: float = 0.01) -> bool:
