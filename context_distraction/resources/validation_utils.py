@@ -51,11 +51,10 @@ def get_value_from_calculations(
     3: Primary domain compound_growth_10yr
     4: Primary domain CBA NPV (cba_10pct.npv)
     5: Primary domain correlation_market_size_vs_growth
-    6: Primary domain market_share_top_segment_percent
-    7: Primary domain investment_priority_rank
-    8: Primary domain risk_adjusted_npv
-    9: Primary domain weighted_investment_score
-    10: Primary domain strategic_priority_rank
+    6: Primary domain investment_priority_rank
+    7: Primary domain risk_adjusted_npv
+    8: Primary domain weighted_investment_score
+    9: Primary domain strategic_priority_rank
     """
     domain_data = calculations_data.get(primary_domain, {})
     
@@ -74,14 +73,12 @@ def get_value_from_calculations(
     elif question_index == 5:
         return domain_data.get("correlation_market_size_vs_growth")
     elif question_index == 6:
-        return domain_data.get("market_share_top_segment_percent")
-    elif question_index == 7:
         return domain_data.get("investment_priority_rank")
-    elif question_index == 8:
+    elif question_index == 7:
         return domain_data.get("risk_adjusted_npv")
-    elif question_index == 9:
+    elif question_index == 8:
         return domain_data.get("weighted_investment_score")
-    elif question_index == 10:
+    elif question_index == 9:
         return domain_data.get("strategic_priority_rank")
     
     return None
@@ -125,24 +122,60 @@ class ConsistencyCheck(TypedDict):
     specific_examples: Annotated[List[Dict[str, str]], "List of specific examples showing conflicts, each with 'markdown_value', 'json_value', 'field_name', and 'description'"]
 
 
+def extract_domain_section_from_markdown(markdown: str, domain: str) -> str:
+    """Extract the markdown section for a specific domain using regex."""
+    # Domain name mappings for markdown headings
+    domain_names = {
+        "renewable_energy": r"(?i)(renewable\s+energy|solar|wind|renewables)",
+        "artificial_intelligence": r"(?i)(artificial\s+intelligence|ai|machine\s+learning)",
+        "electric_vehicles": r"(?i)(electric\s+vehicles?|ev|electric\s+car)",
+        "quantum_computing": r"(?i)(quantum\s+computing|quantum)",
+        "biotechnology": r"(?i)(biotechnology|bio\s+tech|biotech)",
+    }
+    
+    # Try to find domain section
+    pattern = domain_names.get(domain, domain.replace("_", r"\s+"))
+    
+    # Look for headings (## or ###) containing domain name
+    heading_pattern = rf"(?:^|\n)(#{{2,3}})\s*.*?{pattern}.*?(?:\n|$)"
+    match = re.search(heading_pattern, markdown, re.MULTILINE | re.IGNORECASE)
+    
+    if match:
+        start_pos = match.start()
+        heading_level = len(match.group(1))
+        
+        # Find the next heading at same or higher level, or end of document
+        next_heading_pattern = rf"\n#{{1,{heading_level}}}\s+"
+        next_match = re.search(next_heading_pattern, markdown[start_pos + 1:], re.MULTILINE)
+        
+        if next_match:
+            end_pos = start_pos + 1 + next_match.start()
+            return markdown[start_pos:end_pos]
+        else:
+            return markdown[start_pos:]
+    
+    # Fallback: return a section around mentions of the domain
+    domain_mentions = list(re.finditer(rf"\b{pattern}\b", markdown, re.IGNORECASE))
+    if domain_mentions:
+        # Get context around first mention (500 chars before and after)
+        first_mention = domain_mentions[0].start()
+        start = max(0, first_mention - 500)
+        end = min(len(markdown), first_mention + 1000)
+        return markdown[start:end]
+    
+    return ""
+
+
 def check_consistency_with_llm(
     response: str,
     calculations_json: Dict[str, Any],
     model: str = "gpt-4o-mini"
 ) -> Dict[str, Any]:
-    """Use LLM to check consistency between markdown and JSON."""
+    """Use LLM to check consistency between markdown and JSON, checking each domain separately."""
     judge_llm = ChatOpenAI(model=model, temperature=0)
     judge = judge_llm.with_structured_output(ConsistencyCheck)
     
-    prompt = f"""You are checking consistency between markdown content and JSON data in a research report.
-
-Markdown Content:
-{response[:4000]}
-
-JSON Data:
-{json.dumps(calculations_json, indent=2)[:2000]}
-
-Your task is to verify that values mentioned in the markdown text match the values in the JSON section.
+    system_prompt = """You are checking consistency between markdown content and JSON data in a research report.
 
 CRITICAL: Extract NUMERIC VALUES from markdown before comparing!
 - Ignore formatting: "$", commas, "billion", "million", "thousand", etc.
@@ -150,12 +183,11 @@ CRITICAL: Extract NUMERIC VALUES from markdown before comparing!
 - Compare the extracted numeric value to the JSON numeric value
 - Values match if the numbers are equal (within 0.01 tolerance for floating point)
 
-CHECK THESE SPECIFIC FIELDS FOR ALL DOMAINS:
+CHECK THESE SPECIFIC FIELDS:
 - Base facts: capacity_gw, market_size_billions, battery_cost_kwh, qubits, growth_rate
 - Compound growth: compound_growth_10yr values
 - CBA: cba_10pct.npv and cba_10pct.roi values
 - Correlations: correlation_market_size_vs_growth values
-- Market share: market_share_top_segment_percent values
 - Rankings: investment_priority_rank, strategic_priority_rank values
 - Scores: risk_adjusted_npv, weighted_investment_score values
 
@@ -164,42 +196,83 @@ REQUIREMENTS:
    - field_name: The exact field name (e.g., "renewable_energy.compound_growth_10yr")
    - markdown_value: The EXTRACTED NUMERIC VALUE from markdown (not the formatted string)
    - json_value: The exact value from JSON
-   - description: Brief explanation of the conflict (e.g., "Markdown value differs from JSON")
+   - description: Brief explanation of the conflict
 
-2. In 'inconsistencies', list each conflict as a clear sentence showing the extracted numeric comparison (e.g., "Markdown states 8433.21 but JSON shows 8000.00")
+2. In 'inconsistencies', list each conflict as a clear sentence showing the extracted numeric comparison
 
-3. In 'reasoning', explain:
-   - Your methodology for extracting numeric values from formatted markdown text
-   - How you searched the markdown for values
-   - How you compared extracted numeric values to JSON values
-   - Overall assessment of consistency across all domains and fields
+3. In 'reasoning', explain your methodology and findings for this domain
 
 4. Set 'consistency_score' to 1.0 if all extracted numeric values match JSON values, decreasing proportionally for each real inconsistency found.
 
 5. DO NOT flag values as inconsistent if they match after extracting the numeric value. For example:
    - "$196.6 billion" in markdown vs 196.6 in JSON → CONSISTENT
    - "$1,000.00 billion" in markdown vs 1000.0 in JSON → CONSISTENT
-   - "$1,112.82 million" in markdown vs 1112.82 in JSON → CONSISTENT
+   - "$1,112.82 million" in markdown vs 1112.82 in JSON → CONSISTENT"""
 
-Be thorough and specific - check ALL statistics, not just growth rates. A human reviewer needs to be able to verify your findings."""
+    all_inconsistencies = []
+    all_examples = []
+    all_reasoning = []
+    domain_scores = []
+    
+    # Check each domain separately
+    domains = list(calculations_json.get("calculations", {}).keys())
+    
+    for domain in domains:
+        # Extract domain-specific markdown section
+        domain_markdown = extract_domain_section_from_markdown(response, domain)
+        domain_json = calculations_json.get("calculations", {}).get(domain, {})
+        
+        if not domain_markdown or not domain_json:
+            continue
+        
+        # Create human message with domain-specific content
+        human_message = f"""Markdown Content for {domain}:
+{domain_markdown[:2000]}
 
-    try:
-        result = judge.invoke(prompt)
-        return {
-            "score": result.get("consistency_score", 0.0),
-            "is_consistent": result.get("is_consistent", False),
-            "inconsistencies": result.get("inconsistencies", []),
-            "reasoning": result.get("reasoning", ""),
-            "specific_examples": result.get("specific_examples", []),
-        }
-    except Exception as e:
-        return {
-            "score": 0.0,
-            "is_consistent": False,
-            "inconsistencies": [f"Error checking consistency: {str(e)}"],
-            "reasoning": f"Failed to check consistency: {str(e)}",
-            "specific_examples": [],
-        }
+JSON Data for {domain}:
+{json.dumps(domain_json, indent=2)[:1500]}
+
+Check consistency between the markdown and JSON for the {domain} domain."""
+        
+        try:
+            result = judge.invoke([
+                ("system", system_prompt),
+                ("human", human_message)
+            ])
+            
+            # Aggregate results
+            inconsistencies = result.get("inconsistencies", [])
+            examples = result.get("specific_examples", [])
+            reasoning = result.get("reasoning", "")
+            score = result.get("consistency_score", 0.0)
+            
+            # Prefix domain name to inconsistencies and examples
+            for inc in inconsistencies:
+                all_inconsistencies.append(f"{domain}: {inc}")
+            for ex in examples:
+                ex_copy = dict(ex)
+                if "field_name" in ex_copy:
+                    ex_copy["field_name"] = f"{domain}.{ex_copy['field_name']}"
+                all_examples.append(ex_copy)
+            
+            all_reasoning.append(f"{domain}: {reasoning[:150]}")
+            domain_scores.append(score)
+            
+        except Exception as e:
+            all_inconsistencies.append(f"{domain}: Error checking consistency: {str(e)}")
+            domain_scores.append(0.0)
+    
+    # Calculate overall score as average of domain scores
+    overall_score = sum(domain_scores) / len(domain_scores) if domain_scores else 0.0
+    is_consistent = overall_score >= 0.95  # Consider consistent if 95%+ match
+    
+    return {
+        "score": overall_score,
+        "is_consistent": is_consistent,
+        "inconsistencies": all_inconsistencies,
+        "reasoning": "\n\n".join(all_reasoning),
+        "specific_examples": all_examples,
+    }
 
 
 def generate_expected_tool_calls(

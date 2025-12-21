@@ -11,7 +11,6 @@ from context_distraction.agent import create_standard_agent
 from context_distraction.resources.expected_calculations import (
     EXPECTED_COMPOUND_GROWTH,
     EXPECTED_CBA,
-    EXPECTED_MARKET_SHARE,
     EXPECTED_CORRELATIONS,
     EXPECTED_WEIGHTED_SCORES,
     EXPECTED_INVESTMENT_RANKING_DICT,
@@ -58,7 +57,6 @@ def build_reference_outputs(task: Dict[str, Any]) -> Dict[str, Any]:
                 "compound_growth_10yr": EXPECTED_COMPOUND_GROWTH.get(domain, {}).get("10yr"),
                 "cba_10pct": EXPECTED_CBA.get(domain, {}).get("10pct", {}),
                 "correlation_market_size_vs_growth": EXPECTED_CORRELATIONS.get(domain, {}).get("market_size_vs_growth_rate"),
-                "market_share_top_segment_percent": EXPECTED_MARKET_SHARE.get(domain, {}).get("top_segment_share"),
                 "risk_adjusted_npv": EXPECTED_RISK_ADJUSTED.get(domain),
                 "weighted_investment_score": EXPECTED_WEIGHTED_SCORES.get(domain),
                 "investment_priority_rank": EXPECTED_INVESTMENT_RANKING_DICT.get(domain),

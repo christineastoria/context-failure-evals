@@ -54,7 +54,7 @@ BASE_FACTS = {
 # These are like SELECT statements with calculations
 EXPECTED_COMPOUND_GROWTH = {}
 for domain, facts in BASE_FACTS.items():
-    initial = facts.get("capacity_gw") or facts.get("market_size_billions")
+    initial = facts.get("market_size_billions")
     rate = facts["growth_rate"]
     EXPECTED_COMPOUND_GROWTH[domain] = {
         "5yr": round(initial * (1 + rate) ** 5, 2),
@@ -78,27 +78,53 @@ def calculate_roi(initial, benefits):
     roi = ((total_benefits - initial) / initial) * 100
     return round(roi, 2)
 
-# CBA calculations for all domains (varied benefits and investments)
+# Benefit generation functions - deterministic patterns
+def generate_renewable_benefits(initial_investment: float) -> list:
+    """Generate benefits for renewable energy: starts at 15% of initial, grows 20% annually."""
+    base = initial_investment * 0.15
+    return [round(base * (1.20 ** i), 1) for i in range(10)]
+
+def generate_ai_benefits(initial_investment: float) -> list:
+    """Generate benefits for AI: starts at 15% of initial, accelerates growth (25% annually)."""
+    base = initial_investment * 0.15
+    return [round(base * (1.25 ** i), 1) for i in range(10)]
+
+def generate_ev_benefits(initial_investment: float) -> list:
+    """Generate benefits for EVs: starts at 11% of initial, grows 22% annually."""
+    base = initial_investment * 0.11
+    return [round(base * (1.22 ** i), 1) for i in range(10)]
+
+def generate_quantum_benefits(initial_investment: float) -> list:
+    """Generate benefits for quantum: starts at 10% of initial, exponential growth (35% annually)."""
+    base = initial_investment * 0.10
+    return [round(base * (1.35 ** i), 1) for i in range(10)]
+
+def generate_biotech_benefits(initial_investment: float) -> list:
+    """Generate benefits for biotech: starts at 15% of initial, steady growth (15% annually)."""
+    base = initial_investment * 0.15
+    return [round(base * (1.15 ** i), 1) for i in range(10)]
+
+# CBA calculations for all domains
 DOMAIN_CBA_CONFIGS = {
     "renewable_energy": {
         "initial": 100,
-        "benefits": [15, 18, 22, 26, 30, 35, 40, 45, 50, 55],
+        "benefits": generate_renewable_benefits(100),
     },
     "artificial_intelligence": {
         "initial": 80,
-        "benefits": [12, 15, 20, 25, 30, 38, 45, 52, 60, 70],
+        "benefits": generate_ai_benefits(80),
     },
     "electric_vehicles": {
         "initial": 90,
-        "benefits": [10, 14, 18, 22, 28, 35, 42, 48, 55, 62],
+        "benefits": generate_ev_benefits(90),
     },
     "quantum_computing": {
         "initial": 50,
-        "benefits": [5, 8, 12, 18, 25, 35, 48, 62, 78, 95],
+        "benefits": generate_quantum_benefits(50),
     },
     "biotechnology": {
         "initial": 120,
-        "benefits": [18, 22, 26, 30, 35, 40, 45, 50, 55, 60],
+        "benefits": generate_biotech_benefits(120),
     },
 }
 
@@ -119,68 +145,7 @@ for domain, config in DOMAIN_CBA_CONFIGS.items():
         },
     }
 
-# STEP 3: SQL-like JOIN - Market share analysis with segments
-# This is like: SELECT segment, SUM(size) FROM market_data GROUP BY segment
-EXPECTED_MARKET_SHARE = {
-    "renewable_energy": {
-        "segments": [
-            {"name": "Solar", "size_billions": 510, "share_percent": 42.5, "growth_rate": 0.18},
-            {"name": "Wind", "size_billions": 360, "share_percent": 30.0, "growth_rate": 0.15},
-            {"name": "Hydro", "size_billions": 240, "share_percent": 20.0, "growth_rate": 0.08},
-            {"name": "Geothermal", "size_billions": 60, "share_percent": 5.0, "growth_rate": 0.12},
-            {"name": "Other", "size_billions": 30, "share_percent": 2.5, "growth_rate": 0.10},
-        ],
-        "top_segment": "Solar",
-        "top_segment_share": 42.5,
-        "total_market": 1200,
-    },
-    "artificial_intelligence": {
-        "segments": [
-            {"name": "Machine Learning", "size_billions": 78.6, "share_percent": 40.0, "growth_rate": 0.28},
-            {"name": "Computer Vision", "size_billions": 49.2, "share_percent": 25.0, "growth_rate": 0.22},
-            {"name": "NLP", "size_billions": 39.3, "share_percent": 20.0, "growth_rate": 0.25},
-            {"name": "Robotics", "size_billions": 19.7, "share_percent": 10.0, "growth_rate": 0.20},
-            {"name": "Other", "size_billions": 9.8, "share_percent": 5.0, "growth_rate": 0.18},
-        ],
-        "top_segment": "Machine Learning",
-        "top_segment_share": 40.0,
-        "total_market": 196.6,
-    },
-    "electric_vehicles": {
-        "segments": [
-            {"name": "Battery EVs", "size_billions": 270, "share_percent": 60.0, "growth_rate": 0.22},
-            {"name": "Plug-in Hybrids", "size_billions": 135, "share_percent": 30.0, "growth_rate": 0.18},
-            {"name": "Fuel Cell", "size_billions": 36, "share_percent": 8.0, "growth_rate": 0.25},
-            {"name": "Other", "size_billions": 9, "share_percent": 2.0, "growth_rate": 0.15},
-        ],
-        "top_segment": "Battery EVs",
-        "top_segment_share": 60.0,
-        "total_market": 450,
-    },
-    "quantum_computing": {
-        "segments": [
-            {"name": "Quantum Computing Hardware", "size_billions": 4.25, "share_percent": 50.0, "growth_rate": 0.38},
-            {"name": "Quantum Software", "size_billions": 2.55, "share_percent": 30.0, "growth_rate": 0.35},
-            {"name": "Quantum Services", "size_billions": 1.70, "share_percent": 20.0, "growth_rate": 0.32},
-        ],
-        "top_segment": "Quantum Computing Hardware",
-        "top_segment_share": 50.0,
-        "total_market": 8.5,
-    },
-    "biotechnology": {
-        "segments": [
-            {"name": "Pharmaceuticals", "size_billions": 511.5, "share_percent": 50.0, "growth_rate": 0.13},
-            {"name": "Medical Devices", "size_billions": 306.9, "share_percent": 30.0, "growth_rate": 0.11},
-            {"name": "Biotech Research", "size_billions": 153.5, "share_percent": 15.0, "growth_rate": 0.12},
-            {"name": "Agricultural Biotech", "size_billions": 51.2, "share_percent": 5.0, "growth_rate": 0.10},
-        ],
-        "top_segment": "Pharmaceuticals",
-        "top_segment_share": 50.0,
-        "total_market": 1023,
-    },
-}
-
-# STEP 4: Complex JOIN - Cross-domain correlation analysis
+# STEP 3: Complex JOIN - Cross-domain correlation analysis
 # This is like: SELECT corr(a.market_size, b.growth_rate) FROM domain_a a JOIN domain_b b
 EXPECTED_CORRELATIONS = {
     "renewable_energy": {
@@ -248,16 +213,14 @@ def calculate_weighted_score(domain):
     """Calculate weighted investment score using multiple factors."""
     facts = BASE_FACTS[domain]
     cba = EXPECTED_CBA.get(domain, {}).get("10pct", {})
-    market_share = EXPECTED_MARKET_SHARE.get(domain, {}).get("top_segment_share", 0)
     compound_growth = EXPECTED_COMPOUND_GROWTH.get(domain, {}).get("10yr", 0)
     
     # Normalize values
-    npv_score = (cba.get("npv", 0) / 200) * 0.3  # Max NPV ~200
-    roi_score = (cba.get("roi", 0) / 200) * 0.2  # Max ROI ~200%
-    market_score = (market_share / 100) * 0.2  # Market share %
+    npv_score = (cba.get("npv", 0) / 200) * 0.4  # Max NPV ~200 (increased weight)
+    roi_score = (cba.get("roi", 0) / 200) * 0.3  # Max ROI ~200% (increased weight)
     growth_score = (compound_growth / facts.get("market_size_billions", 1) / 5) * 0.3  # Growth multiple
     
-    return round(npv_score + roi_score + market_score + growth_score, 4)
+    return round(npv_score + roi_score + growth_score, 4)
 
 EXPECTED_WEIGHTED_SCORES = {
     domain: calculate_weighted_score(domain)
@@ -301,15 +264,13 @@ def calculate_strategic_priority_score(domain):
     """Final priority score combining all factors."""
     weighted = EXPECTED_WEIGHTED_SCORES.get(domain, 0)
     risk_adj = EXPECTED_RISK_ADJUSTED.get(domain, 0) / 100  # Normalize
-    market_share = EXPECTED_MARKET_SHARE.get(domain, {}).get("top_segment_share", 0) / 100
     growth_multiple = EXPECTED_COMPOUND_GROWTH.get(domain, {}).get("10yr", 0) / BASE_FACTS[domain].get("market_size_billions", 1)
     
     # Weighted combination
     priority_score = (
-        weighted * 0.35 +
-        risk_adj * 0.25 +
-        market_share * 0.20 +
-        min(growth_multiple / 5, 1.0) * 0.20  # Cap growth multiple contribution
+        weighted * 0.45 +
+        risk_adj * 0.30 +
+        min(growth_multiple / 5, 1.0) * 0.25  # Cap growth multiple contribution
     )
     return round(priority_score, 4)
 
@@ -360,11 +321,7 @@ if __name__ == "__main__":
     for domain, cba in EXPECTED_CBA.items():
         print(f"   {domain}: NPV={cba['10pct']['npv']}, ROI={cba['10pct']['roi']}%")
     
-    print("\n3. MARKET SHARE (Top Segment):")
-    for domain, share in EXPECTED_MARKET_SHARE.items():
-        print(f"   {domain}: {share['top_segment']} at {share['top_segment_share']}%")
-    
-    print("\n4. CORRELATIONS:")
+    print("\n3. CORRELATIONS:")
     print(f"   Renewable Market vs Growth: {EXPECTED_CORRELATIONS['renewable_energy']['market_size_vs_growth_rate']}")
     print(f"   Renewable-AI Cross-domain: {EXPECTED_CORRELATIONS['renewable_ai']['renewable_market_vs_ai_patents']}")
     
