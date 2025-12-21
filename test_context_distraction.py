@@ -36,6 +36,8 @@ def build_reference_outputs(task: Dict[str, Any]) -> Dict[str, Any]:
     """Build reference outputs with all expected values."""
     expected_tool_calls = generate_expected_tool_calls(
         topics=task["topics"],
+        primary_domain=task.get("primary_domain"),
+        secondary_domain=task.get("secondary_domain"),
         stats_count=task.get("stats_count", 5),
         expert_count=task.get("expert_count", 3),
         case_count=task.get("case_count", 2),
@@ -160,12 +162,24 @@ def consistency_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], refer
         "comment": "\n".join(comment_parts),
     }
 
-def task_completion_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Evaluate task completion by comparing tool calls with expected."""
+def tool_call_completeness_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
+    """Evaluate how many expected tool calls with exact arguments are missing."""
     expected_tool_calls = reference_outputs.get("expected_tool_calls", [])
     actual_tool_calls = outputs.get("tool_calls", [])
+    
     if not actual_tool_calls and expected_tool_calls:
-        return {"key": "task_completion", "score": 0.0, "comment": f"No tool calls found in output. Available keys: {list(outputs.keys())}"}
+        return {
+            "key": "tool_call_completeness",
+            "score": 0.0,
+            "comment": f"No tool calls found in output. Expected {len(expected_tool_calls)} tool calls."
+        }
+    
+    if not expected_tool_calls:
+        return {
+            "key": "tool_call_completeness",
+            "score": 1.0,
+            "comment": "No expected tool calls defined."
+        }
     
     # Check that each expected tool call with matching args appears somewhere
     result = compare_tool_calls(
@@ -174,31 +188,63 @@ def task_completion_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], r
         strict_order=False
     )
     
-    # Check total count is within 2.5% tolerance
-    expected_count = reference_outputs.get("expected_tool_calls_count", len(expected_tool_calls))
-    actual_count = len(actual_tool_calls)
-    tolerance = 0.025  # 2.5%
-    count_diff = abs(actual_count - expected_count) / expected_count if expected_count > 0 else 1.0
-    count_within_tolerance = count_diff <= tolerance
-    
-    # Combined score: 70% for presence of expected calls, 30% for count tolerance
-    presence_score = result["score"]
-    count_score = 1.0 if count_within_tolerance else max(0.0, 1.0 - (count_diff - tolerance) / tolerance)
-    combined_score = 0.7 * presence_score + 0.3 * count_score
-    
+    matched_count = result["matched_steps"]
+    total_expected = result["total_expected"]
+    missing_count = result["unmatched_steps"]
     unmatched_indices = result.get("unmatched_indices", [])
+    
+    # Score is fraction of expected calls that were found
+    score = matched_count / total_expected if total_expected > 0 else 0.0
+    
     comment_parts = [
-        f"Presence: {result['matched_steps']}/{result['total_expected']} expected tool calls found",
-        f"Count: {actual_count} actual vs {expected_count} expected ({'✓' if count_within_tolerance else '✗'} within 2.5% tolerance)"
+        f"Found {matched_count}/{total_expected} expected tool calls with exact arguments",
+        f"Missing {missing_count} expected tool calls"
     ]
+    
     if unmatched_indices:
-        comment_parts.append(f"Unmatched expected indices: {unmatched_indices[:20]}")
+        comment_parts.append(f"Missing expected tool call indices: {unmatched_indices[:20]}")
         if len(unmatched_indices) > 20:
             comment_parts.append(f"  (and {len(unmatched_indices) - 20} more)")
     
     return {
-        "key": "task_completion",
-        "score": min(combined_score, 1.0),
+        "key": "tool_call_completeness",
+        "score": score,
+        "comment": "\n".join(comment_parts),
+    }
+
+def tool_call_efficiency_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
+    """Evaluate how many extra tool calls were made beyond the optimal trajectory."""
+    expected_tool_calls = reference_outputs.get("expected_tool_calls", [])
+    actual_tool_calls = outputs.get("tool_calls", [])
+    
+    expected_count = reference_outputs.get("expected_tool_calls_count", len(expected_tool_calls))
+    actual_count = len(actual_tool_calls)
+    
+    extra_calls = max(0, actual_count - expected_count)
+    
+    # Score: 1.0 if no extra calls, decreases as extra calls increase
+    # Penalty: -0.1 per extra call, minimum score of 0.0
+    if expected_count == 0:
+        score = 1.0 if actual_count == 0 else 0.0
+    else:
+        # Score starts at 1.0 and decreases by 0.05 per extra call
+        # So 1 extra call = 0.95, 2 extra = 0.90, etc.
+        score = max(0.0, 1.0 - (extra_calls * 0.05))
+    
+    comment_parts = [
+        f"Expected: {expected_count} tool calls",
+        f"Actual: {actual_count} tool calls",
+        f"Extra calls: {extra_calls}"
+    ]
+    
+    if extra_calls > 0:
+        comment_parts.append(f"Efficiency: Made {extra_calls} more tool call(s) than optimal")
+    else:
+        comment_parts.append("Efficiency: Optimal (no extra calls)")
+    
+    return {
+        "key": "tool_call_efficiency",
+        "score": score,
         "comment": "\n".join(comment_parts),
     }
 
@@ -251,7 +297,12 @@ def run_agent_with_tool_calls(agent, query: str) -> dict:
 experiment = evaluate(
     lambda inputs: run_agent_with_tool_calls(standard_agent, inputs["query"]),
     data=dataset_name,
-    evaluators=[recall_accuracy_evaluator, consistency_evaluator, task_completion_evaluator],
+    evaluators=[
+        recall_accuracy_evaluator,
+        consistency_evaluator,
+        tool_call_completeness_evaluator,
+        tool_call_efficiency_evaluator,
+    ],
     experiment_prefix="context-distraction-standard-agent",
     metadata={"agent_type": "standard", "model": "gpt-4o-mini"},
     max_concurrency=1,

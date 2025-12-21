@@ -277,32 +277,119 @@ Check consistency between the markdown and JSON for the {domain} domain."""
 
 def generate_expected_tool_calls(
     topics: List[str],
+    primary_domain: str,
+    secondary_domain: str,
     stats_count: int,
     expert_count: int,
     case_count: int,
     year_count: int,
     compare_count: int,
 ) -> List[Dict[str, Any]]:
-    """Generate expected tool calls pattern based on task structure."""
+    """
+    Generate expected tool calls based on questions and expected calculations.
+    
+    Each tool + argument combination should only be called once, as the agent
+    can look back in conversation history for previous results.
+    
+    We derive exact tool calls from the questions:
+    - Q1: Primary domain base fact -> get_statistics(primary_domain)
+    - Q2: Secondary domain base fact -> get_statistics(secondary_domain)
+    - Q3: Compound growth -> calculate_compound_growth with exact values
+    - Q4: CBA NPV -> calculate_cost_benefit_analysis with exact values
+    - Q5: Correlation -> analyze_correlation with data from all domains
+    - Q6-Q9: Rankings -> require compound growth and CBA for ALL domains
+    """
+    from context_distraction.resources.expected_calculations import (
+        BASE_FACTS, DOMAIN_CBA_CONFIGS
+    )
+    
     expected = []
-    for topic in topics:
-        expected.append({"name": "research_topic", "args": {"topic": topic}})
-        for i in range(stats_count):
-            expected.append({"name": "get_statistics", "args": {"topic": topic}})
-        for i in range(expert_count):
-            expected.append({"name": "get_expert_opinion", "args": {"topic": topic}})
-        for i in range(case_count):
-            expected.append({"name": "get_case_study", "args": {"topic": topic}})
-        for i in range(year_count):
-            expected.append({"name": "get_year_data", "args": {"topic": topic}})
-        expected.append({"name": "calculate_compound_growth", "args": {"topic": topic}})
-        expected.append({"name": "calculate_market_share", "args": {"topic": topic}})
-        expected.append({"name": "analyze_correlation", "args": {"topic": topic}})
-        expected.append({"name": "calculate_cost_benefit_analysis", "args": {"topic": topic}})
-        expected.append({"name": "aggregate_statistics", "args": {"topic": topic}})
-        for i in range(compare_count):
-            expected.append({"name": "compare_topics", "args": {"topic": topic}})
-        expected.append({"name": "synthesize_research", "args": {"topics": topics}})
+    seen_calls = set()  # Track (tool_name, args_tuple) to avoid duplicates
+    
+    def add_call(tool_name: str, args: Dict[str, Any]):
+        """Add tool call if not already seen."""
+        # Create hashable key (convert lists/dicts to tuples)
+        def make_hashable(obj):
+            if isinstance(obj, dict):
+                return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+            elif isinstance(obj, list):
+                return tuple(make_hashable(item) for item in obj)
+            else:
+                return obj
+        
+        args_key = tuple(sorted((k, make_hashable(v)) for k, v in args.items()))
+        call_key = (tool_name, args_key)
+        if call_key not in seen_calls:
+            seen_calls.add(call_key)
+            expected.append({"name": tool_name, "args": args})
+    
+    # Q1: Primary domain base fact - need statistics
+    add_call("get_statistics", {"topic": primary_domain})
+    
+    # Q2: Secondary domain base fact - need statistics
+    add_call("get_statistics", {"topic": secondary_domain})
+    
+    # Q3: Compound growth for primary domain
+    primary_facts = BASE_FACTS[primary_domain]
+    primary_initial = primary_facts["market_size_billions"]
+    primary_growth = primary_facts["growth_rate"]
+    add_call("calculate_compound_growth", {
+        "initial_value": primary_initial,
+        "growth_rate": primary_growth,
+        "years": 10
+    })
+    
+    # Q4: CBA NPV for primary domain
+    primary_cba = DOMAIN_CBA_CONFIGS[primary_domain]
+    add_call("calculate_cost_benefit_analysis", {
+        "initial_investment": primary_cba["initial"],
+        "annual_benefits": primary_cba["benefits"],
+        "discount_rate": 0.10,
+        "years": 10
+    })
+    
+    # Q5: Correlation - needs data from ALL domains
+    # First ensure we have statistics for all domains
+    for domain in topics:
+        add_call("get_statistics", {"topic": domain})
+    
+    # Then calculate correlation with data from all domains
+    data_points = []
+    for domain in topics:
+        d_facts = BASE_FACTS[domain]
+        data_points.append({
+            "market_size_billions": d_facts["market_size_billions"],
+            "growth_rate": d_facts["growth_rate"]
+        })
+    add_call("analyze_correlation", {
+        "data_points": data_points,
+        "variable1": "market_size_billions",
+        "variable2": "growth_rate"
+    })
+    
+    # Q6-Q9: Rankings require compound growth and CBA for ALL domains
+    # (to calculate weighted scores and rankings)
+    for domain in topics:
+        d_facts = BASE_FACTS[domain]
+        d_initial = d_facts["market_size_billions"]
+        d_growth = d_facts["growth_rate"]
+        d_cba = DOMAIN_CBA_CONFIGS[domain]
+        
+        # Compound growth for each domain
+        add_call("calculate_compound_growth", {
+            "initial_value": d_initial,
+            "growth_rate": d_growth,
+            "years": 10
+        })
+        
+        # CBA for each domain
+        add_call("calculate_cost_benefit_analysis", {
+            "initial_investment": d_cba["initial"],
+            "annual_benefits": d_cba["benefits"],
+            "discount_rate": 0.10,
+            "years": 10
+        })
+    
     return expected
 
 
