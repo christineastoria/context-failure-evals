@@ -20,6 +20,7 @@ dependencies = [
     "ipykernel>=6.26.0",
     "openevals>=0.1.0",
     "python-dotenv>=1.0.0",
+    "deepagents>=0.1.0",
 ]
 
 [project.optional-dependencies]

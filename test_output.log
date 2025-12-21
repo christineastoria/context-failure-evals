@@ -1,0 +1,27 @@
+✓ Setup complete
+Using model: gpt-4o-mini
+✓ Created standard agent (13 tools)
+✓ Created deep agent (13 tools)
+Loaded 4 test tasks from resources
+✓ Created new dataset: context-distraction-research-tasks
+✓ Added 4 new examples to dataset
+✓ Defined 3 evaluators
+✓ Created agent wrapper
+
+================================================================================
+RUNNING LANGSMITH EXPERIMENT - Standard Agent
+================================================================================
+
+Running evaluation on 4 test tasks...
+This will record all results to LangSmith for analysis.
+
+View the evaluation results for experiment: 'context-distraction-standard-agent-9b00a0ed' at:
+https://smith.langchain.com/o/bcad64b4-50f8-4e66-a0be-8dbaf6f6619c/datasets/38e61b75-df7c-4a0a-8297-e5cfd3ee5638/compare?selectedSessions=886b5d70-8885-4f18-9418-8513ca7c8a6d
+
+
+0it [00:00, ?it/s]Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('422 Client Error: unknown for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Unprocessable entity: error reading multipart data: multipart: NextPart: EOF"}\n')
