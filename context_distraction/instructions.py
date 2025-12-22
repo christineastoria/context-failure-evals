@@ -33,10 +33,34 @@ When gathering data, consider whether you need:
 - Individual case details (look in narrative descriptions and key points)
 - Pre-analyzed results (extract directly from research)
 
+**Data Classification for Research:**
+When conducting research, classify your data needs:
+- **aggregate level** - Overall metrics across a category, including calculations on broad population data. Covers both direct metrics and calculated projections using population-wide data.
+- **specific level** - Individual case analysis with detailed scenario parameters. Use signal phrases: "given scenario", "representative case", "specific instance", "for the given case". For case-specific parameters, not population-wide analysis.
+- **stated level** - Simple fact lookup or pre-analyzed result. Extract directly, don't recalculate.
+
 Research Principles:
-- **Explore before calculating**: If you don't have all needed data, gather and review available information first
+- **Explore before calculating**: If you don't have all needed data, gather and review available information first. It's important to understand the full context before performing calculations to ensure you're using the right values and methods.
 - **Unit consistency**: Keep calculation values at same scale. Return answers in the same units as input data (e.g., if inputs are "$100 million", answer in millions)
-- **Scope**: When questions reference "all" entities, identify what's available in your research data
+  * "$100 million" → extract as **100** (in millions), NOT 100000000 (in dollars)
+  * Keep ALL calculation values at the same scale throughout
+  * When converting between units, be explicit about the conversion factor
+  * If mixing scales is unavoidable, document the unit for each value clearly
+- **Scope**: When questions reference "all" entities, ensure you're considering the complete set of relevant items rather than a subset.
+
+**CRITICAL: Systematic Calculation Approach**
+
+For multi-step calculations, follow this process:
+1. **Identify what you need** - List all intermediate values required
+2. **Calculate each using tools** - Use calculation tools, not mental arithmetic
+3. **Use exact tool results** - When a tool returns a value, use that EXACT value in your next step (don't substitute a different number)
+4. **Verify consistency** - Check that all parameters come from your calculated results
+
+This systematic approach prevents errors from mental arithmetic and value substitution.
+
+**Answer Priority (follow this order):**
+1. **Use provided research data FIRST** - If a value exists in research_topic results (key_points, research findings, or statistics), extract and use it directly. Don't recalculate.
+2. **Calculate systematically if needed** - Use calculation tools (not mental math). For sequences/arrays, use atomic tools (like calculate_power) for each element.
 
 Key Requirements:
 - ACCURACY: Record exact numbers, percentages, and statistics. Do not approximate.
@@ -45,7 +69,15 @@ Key Requirements:
 - CONTEXT: Note relationships between topics and cross-domain insights.
 - VERIFICATION: Double-check that your calculations are accurate and that your final report addresses all questions.
 
-The final report must demonstrate deep understanding of each topic individually AND the relationships between them. Include specific details that can only be found through thorough research.
+**Report Generation Process:**
+When creating your final report:
+1. **Review the query** - Identify all questions that need answering
+2. **Match key considerations to your findings** - Ensure you've gathered the necessary data
+3. **Answer with full precision** - State values as provided, include units and context
+4. **Follow the query's format** - Use requested structure (JSON, tables, etc.) and ensure all required information is incorporated
+5. **Provide methodology context** - Explain your research approach where relevant
+
+The final report must demonstrate deep understanding of each topic individually AND the relationships between them. Include specific details that can only be found through thorough research. All key questions must be answered. Don't skip any.
 
 Current date: {datetime.now().strftime('%B %d, %Y')}
 """
@@ -109,11 +141,13 @@ You have access to these main tools:
 <Calling deep_research>
 
 **Classify the data level:**
-- "aggregate" - Overall metrics across a category, including calculations on broad population data → use "statistics"
-  * Covers both direct metrics and calculated projections using population-wide data
-- "specific" - Individual case analysis with detailed scenario parameters → use "key_points"
-  * Use signal phrases: "given scenario", "representative case", "specific instance", "for the given case"
-  * For case-specific parameters, not population-wide analysis
+- "aggregate" - Sector/market-wide metrics or calculations using population-level statistics → use "statistics"
+  * Input data: Broad metrics like market size, industry averages, total investments
+  * Even if calculation needed, the source data is population-wide
+- "specific" - Individual case/scenario requiring multiple detailed parameters → use "key_points"
+  * Input data: Detailed parameters from narratives (often multiple values per case)
+  * If the question requires extracting several related values from a case description, use specific
+  * Signal: Questions about "a project", "the scenario", or financial analysis of individual cases
 - "stated" - Simple fact lookup or pre-analyzed result → use "research_findings"
   * Researcher should extract directly, not recalculate
 
