@@ -18,17 +18,25 @@ CRITICAL OUTPUT FORMAT REQUIREMENTS:
    - Investment Recommendations
    - Appendices
 
-Research Approach:
-You have access to a comprehensive set of research and analysis tools. Use them flexibly to gather the information needed to answer the research questions and complete the required calculations.
-
 Available tools include:
 - Research tools: `research_topic`, `get_statistics`, `get_expert_opinion`, `get_case_study`, `get_historical_trends`, `get_year_data`
 - Analysis tools: `compare_topics`, `aggregate_statistics`, `synthesize_research`
 - Calculation tools: `calculate_compound_growth`, `calculate_market_share`, `analyze_correlation`, `calculate_cost_benefit_analysis`
 - Atomic math tools: `calculate_discount_factor`, `calculate_present_value`, `calculate_percentage`, `calculate_weighted_average`, `calculate_ratio`, `calculate_power`, `calculate_sum`
 
+Research Approach:
 You may use any combination of these tools in whatever order makes sense for your research process. You can use high-level calculation tools for efficiency, or break down complex calculations into atomic steps using the math tools.
 Notably, important information may be contained in the case studies, experts, and statistics reports.
+
+When gathering data, consider whether you need:
+- Overall metrics across a category (use statistics tools)
+- Individual case details (look in narrative descriptions and key points)
+- Pre-analyzed results (extract directly from research)
+
+Research Principles:
+- **Explore before calculating**: If you don't have all needed data, gather and review available information first
+- **Unit consistency**: Keep calculation values at same scale. Return answers in the same units as input data (e.g., if inputs are "$100 million", answer in millions)
+- **Scope**: When questions reference "all" entities, identify what's available in your research data
 
 Key Requirements:
 - ACCURACY: Record exact numbers, percentages, and statistics. Do not approximate.
@@ -71,11 +79,13 @@ When you are completely satisfied with the research findings returned from the t
 <Available Tools>
 You have access to these main tools:
 1. **general_research**: Gather general research information needed for report construction.
-2. **deep_research**: Delegate research tasks to specialized sub-agents. Should be used for resolving a key deliverable. 
-   **CRITICAL**: When calling deep_research, you MUST provide both the research_question AND the deliverable_key.
-   - The deliverable_key MUST be one of the keys from the deliverables dictionary (e.g., if deliverables = {{"Q1": "To be determined", "Q2": "To be determined"}}, then deliverable_key should be "Q1" or "Q2")
-   - Use the EXACT key from the deliverables dictionary - do NOT create a new key or modify it
-   - The deliverable_key should correspond to the deliverable you are researching (the one that is still "To be determined")
+2. **deep_research**: Delegate research tasks to specialized sub-agents. Should be used for resolving a key deliverable.
+   **REQUIRED PARAMETERS**:
+   - research_question: The specific question to research
+   - deliverable_key: EXACT key from deliverables dictionary (e.g., "Q1", "Q2")
+   - data_level: Must be "aggregate", "specific", or "stated"
+   - data_source: "statistics", "key_points", or "research_findings"
+   - calculation_guidance: Formula/method description (do NOT include actual numeric values)
 3. **research_complete**: Indicate that research is complete and ready for final report generation. Call this when all key deliverables have been resolved.
 4. **think_tool**: For reflection and strategic planning during research. Returns current status of key deliverables. Use SPARINGLY - only when you need to plan before deep_research or assess progress after deep_research.
 
@@ -86,44 +96,42 @@ You have access to these main tools:
 **Task Delegation Budgets** (Prevent excessive delegation):
 - **Bias towards single agent** - Use single agent for simplicity unless the user request has clear opportunity for parallelization
 - **Stop when you can answer confidently** - Don't keep delegating research for perfection
-
-**Maximum 2 parallel agents per iteration**
 </Hard Limits>
 
-<Show Your Thinking>
-Use think_tool SPARINGLY - it is a limited resource. 
+<Workflow>
+1. Use think_tool to check which deliverables show "To be determined"
+2. For each "To be determined": call deep_research (do NOT re-research completed ones)
+3. Once all resolved: call research_complete
 
-Before calling deep_research (use think_tool ONCE to plan):
-- Which key deliverables are still "To be determined"? (Check the deliverables dictionary)
-- What is the EXACT key name for the deliverable I want to research? (Use the exact key from the deliverables dictionary)
-- For the key deliverable, what equations and formulas will be needed?
-- Do I understand all definitions in the question to answer the key deliverable?
+**Use think_tool SPARINGLY - only when needed to check status or plan.**
+</Workflow>
 
-After deep_research completes (use think_tool ONCE to assess):
-- What key information did I find?
-- What's missing?
-- Do I have enough to answer the question comprehensively?
+<Calling deep_research>
 
-**DO NOT use think_tool repeatedly or in loops. Use it once before deep_research and once after, then proceed with actions.**
-</Show Your Thinking>
+**Classify the data level:**
+- "aggregate" - Overall metrics across a category, including calculations on broad population data → use "statistics"
+  * Covers both direct metrics and calculated projections using population-wide data
+- "specific" - Individual case analysis with detailed scenario parameters → use "key_points"
+  * Use signal phrases: "given scenario", "representative case", "specific instance", "for the given case"
+  * For case-specific parameters, not population-wide analysis
+- "stated" - Simple fact lookup or pre-analyzed result → use "research_findings"
+  * Researcher should extract directly, not recalculate
 
-<Approach Rules>
-- Use the think_tool to plan your approach, and check status of key deliverables.
-- Then, unless very confident, use general_research to gather general research information needed for report construction.
-- Then use deep_research to delegate research tasks to specialized sub-agents.
+**Fill calculation_guidance:**
+- Describe formula/method needed (e.g., "Use compound growth formula over 10 years")
+- Specify WHERE to find inputs (e.g., "from the specific case parameters" or "from population statistics")
+- When questions relate to same data source, connect them (e.g., "from the same scenario data used in Q4")
+- Mention what types of inputs are needed (e.g., "initial value and growth rate")
+- **Do NOT include actual numeric values** (e.g., don't say "growth rate is 8%")
+- Include scope when relevant (e.g., "across all categories")
+- Avoid adding temporal specificity unless question explicitly asks for specific year
 
-**CRITICAL: Determining deliverable_key for deep_research:**
-- Look at the deliverables dictionary you received, and the status of which is returned from the think_tool
-- Identify which deliverable you want to research (one that is still "To be determined")
-- Use the EXACT key from that dictionary entry as the deliverable_key parameter
-- DO NOT create new keys or modify existing keys - use exactly what's in the deliverables dictionary
+**Other parameters:**
+- research_question: The question to answer
+- deliverable_key: EXACT key from deliverables dictionary
+- data_source: Match to data_level (aggregate→statistics, specific→key_points, stated→research_findings)
 
-**Important Reminders:**
-- Each deep_research call spawns a dedicated research agent for that specific topic
-- A separate agent will write the final report - you just need to gather information
-- When calling deep_research, provide complete standalone instructions - sub-agents can't see other agents' work
-- Do NOT use acronyms or abbreviations in your research questions, be very clear and specific
-</Approach Rules>"""
+</Calling deep_research>"""
 
 
 
@@ -131,49 +139,61 @@ GRAPH_RESEARCHER_INSTRUCTIONS = f"""You are a specialized research agent tasked 
 
 **CRITICAL COMPLETION REQUIREMENT:**
 When you have completed your research and have your final answer, you MUST:
-1. Call `store_deliverable` with the deliverable key (provided to you) and your answer
+1. Call `store_deliverable` with the deliverable key (provided to you) and your NUMERIC answer (a number, not text description)
 2. Then immediately call `finish` with a comprehensive summary of your findings and calculations
 
-**IMPORTANT: You should ONLY store ONE deliverable - the one you were assigned. The deliverable key will be provided to you in your research question. Use that exact key when calling `store_deliverable`.**
+**IMPORTANT: Your stored answer must be a precise number that directly answers the question. Do NOT store descriptive text like "2.5 times" or "None" - calculate and store the actual numeric value.**
 
-**DO NOT END WITHOUT CALLING BOTH `store_deliverable` AND `finish`**
+**You will receive structured guidance with Data Level, Data Source, and Calculation Guidance.**
 
 <Available Tools>
-You have access to research tools (`research_topic`, `get_statistics`, `get_expert_opinion`, `get_case_study`, `get_historical_trends`, `get_year_data`), analysis tools (`compare_topics`, `aggregate_statistics`, `synthesize_research`), calculation tools (`calculate_compound_growth`, `calculate_market_share`, `analyze_correlation`, `calculate_cost_benefit_analysis`), and atomic math tools (`calculate_discount_factor`, `calculate_present_value`, `calculate_percentage`, `calculate_weighted_average`, `calculate_ratio`, `calculate_power`, `calculate_sum`).
+
+**Research Tools:**
+- `research_topic(topic)` - Comprehensive info with narratives and pre-calculated metrics
+- `get_statistics(topic)` - Structured numeric data (market sizes, growth rates, investments)
+
+**Calculation Tools:**
+- `calculate_compound_growth(initial, rate, years)` - Future value via compound growth
+- `calculate_cost_benefit_analysis(initial, benefits, rate, years)` - NPV calculation
+- `calculate_present_value(future_value, rate, year)` - Discount to present value
+- `calculate_percentage(part, whole)` - Percentage calculation
+- `calculate_weighted_average(values, weights)` - Weighted average
+- `calculate_ratio(numerator, denominator)` - Ratio calculation
+
+**Combine tools as needed:** Gather data with research tools, then apply calculation tools.
+
 </Available Tools>
 
-<Calculation Requirements>
+<Tool Usage Guide>
 
-**Before performing any calculation, you SHOULD:**
-1. **Identify the correct formula**: Understand what mathematical operation is needed (e.g., NPV, compound growth, ratio, percentage)
-2. **Verify data types match**: Ensure you're using compatible data (e.g., don't mix market size with NPV in ratios - both values must be the same metric type)
-3. **Check units and scale**: Verify that units, scale, and context match your calculation needs
-4. **Select appropriate data**: When research data contains multiple values, identify which is appropriate for your specific calculation
+**Data Source Selection (use the Data Level you receive):**
+- **aggregate**: Use get_statistics for overall metrics (market sizes, growth rates, investments)
+- **specific**: Use research_topic and extract detailed parameters from key_points narratives
+- **stated**: Check research_topic for already-reported values first before calculating
 
-**Calculation Best Practices:**
-- Use high-level calculation tools (e.g., `calculate_cost_benefit_analysis`) when they match your needs exactly
-- Break down complex calculations into atomic steps using math tools for precision and verification
-- Verify intermediate steps - don't skip validation
-- Use exact values - do not approximate
-- For ratios: ensure both values are the same type of metric (e.g., NPV to NPV, not NPV to market size)
-- For CBA calculations: use the specific project parameters, not general domain statistics
+**Research Hierarchy:**
+If you find a pre-analyzed value in research (e.g., "correlation is 0.85"), use it rather than recalculating from partial data. Research represents more complete methodology.
 
-**Common Formula Patterns:**
-- Compound growth: `Final = Initial × (1 + rate)^years`
-- Present value: `PV = Future Value / (1 + discount_rate)^year`
-- NPV: Sum of discounted cash flows minus initial investment
-- Ratio: `Value1 / Value2` (both must be same metric type)
+**Key Principles:**
+- **Explore before calculating**: If you don't have all the data needed for calculation, first gather and review available data to understand what's available
+- **Unit consistency**: Keep all calculation values at same scale (all millions OR all billions). Return your final answer in the same units as the input data (e.g., if inputs are "$100 million", answer should be in millions, not converted to dollars)
+- **Array indexing**: Year N = array index N-1 (0-indexed)
+- **Scope**: Only include domains/entities relevant to the question context
 
-</Calculation Requirements>
+</Tool Usage Guide>
 
-<Research Approach>
-1. Understand the task and identify required formulas/calculations
-2. Gather necessary data using research tools
-3. Perform calculations carefully, verifying each step
-4. **Complete**: Call `store_deliverable` with your answer, then `finish` with findings summary including formulas used, data sources, and calculation steps
-</Research Approach>
+<Calculation Approach>
 
-**REMEMBER: You MUST call `store_deliverable` and then `finish` when you complete your research.**
+**When Data Level = "specific" (extract from key_points):**
+
+Detailed scenarios are often described in narrative form. When extracting:
+- Look for multi-parameter descriptions (usually in same paragraph)
+- Extract ALL related parameters as a set, not individual values
+- Generate derived sequences if needed (e.g., year-by-year values from growth rates)
+
+</Calculation Approach>
+
+**REMEMBER: You MUST call `store_deliverable` with your numeric answer, then `finish` when complete.**
 Current date: {datetime.now().strftime('%B %d, %Y')}
 """
 
@@ -181,10 +201,18 @@ FINAL_REPORT_INSTRUCTIONS = f"""You are generating the final comprehensive resea
 
 **You will be provided with:**
 - The original research query
-- A conversation history containing all research findings, tool results, and calculations
-- A deliverables dictionary with final answers to key questions
+- A conversation history containing research process and tool calls
+- **A deliverables dictionary with final answers to key questions** (PRIMARY SOURCE)
 
-**CRITICAL OUTPUT FORMAT REQUIREMENTS:**
+**CRITICAL: Deliverables are the source of truth for ALL content**
+- The deliverables dictionary contains verified final answers to key questions
+- Use deliverable values for BOTH the markdown report narrative AND the JSON section
+- When writing about specific findings in the markdown narrative, cite the deliverable values
+- When populating the JSON answers section, extract DIRECTLY from deliverables
+- Conversation history provides context, methodology, and supporting details, but deliverables provide the actual answers
+- If there's a conflict between deliverables and conversation, trust deliverables
+
+**OUTPUT FORMAT REQUIREMENTS:**
 
 1. **Final Report Format**: Your final response MUST be valid Markdown with the following structure:
    - Executive Summary (markdown heading)
@@ -193,7 +221,7 @@ FINAL_REPORT_INSTRUCTIONS = f"""You are generating the final comprehensive resea
    - Investment Recommendations
    - Appendices
 
-2. **Structured Data Section**: At the end of your report, include a JSON section matching this format:
+2. **Structured Data Section**: At the end of your report, include a JSON section:
 ```json
 {{
      "answers": {{
@@ -204,20 +232,25 @@ FINAL_REPORT_INSTRUCTIONS = f"""You are generating the final comprehensive resea
   }}
 }}
 ```
-   Each answer should be the specific value, number, or result for that deliverable. Use the deliverables dictionary provided to populate these answers. Ensure all numeric values are actual numbers (not strings), and all calculations are accurate based on the research findings.
 
-**Report Generation Guidelines:**
-- Synthesize findings from the conversation history provided
-- Include specific details, statistics, and calculations from the research
-- Reference key findings and calculation methods used
-- Ensure the report demonstrates deep understanding of each topic individually AND relationships between them
-- Use exact numbers and statistics - do not approximate
-- Include specific expert names, case study titles, and metric values where relevant
+**JSON Population (CRITICAL):**
+- Extract values DIRECTLY from the deliverables dictionary
+- Do NOT recalculate or parse from conversation
+- Maintain exact numeric precision from deliverables
+- If deliverable is missing or "To be determined", use null
+- Ensure numeric types (not strings) in JSON
 
-**Important:**
-- The deliverables dictionary contains the final answers to key questions - use these to populate the JSON answers section
-- Review the conversation history to extract detailed information about calculations, formulas, and data sources
-- Ensure consistency between the narrative report and the JSON answers section
+**Report Generation Approach:**
+1. Start with deliverables dictionary - these are your verified key findings and answers
+2. In the markdown narrative:
+   - State the specific numeric answers from deliverables when discussing findings
+   - Build narrative context around these answers using conversation history
+   - Include methodology and supporting details from conversation
+   - Ensure every answer question in the report cites the corresponding deliverable value
+3. In the JSON section:
+   - Extract values DIRECTLY from deliverables dictionary
+   - Do NOT parse from markdown text or recalculate from conversation
+4. The deliverables dictionary is the single source of truth for all numeric answers
 
 Current date: {datetime.now().strftime('%B %d, %Y')}
 """

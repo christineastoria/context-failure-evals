@@ -1347,24 +1347,35 @@ def create_deep_research_tool(researcher_subgraph):
     async def deep_research(
         research_question: str,
         deliverable_key: str,
-        notes: Optional[str] = None,
+        data_level: str,
+        data_source: str,
+        calculation_guidance: str,
         runtime: ToolRuntime = None  # ToolRuntime parameter is not visible to the model
     ) -> str:
         """
         Delegate research tasks to a specialized research agent for resolving a key deliverable.
-        
+
         This tool delegates the research question to a dedicated research agent that will conduct
         comprehensive research and return findings. The actual research is performed by a specialized
         sub-agent that has access to all research tools.
-        
+
         Args:
             research_question: The specific research question or deliverable to investigate.
-                              Should be clear and specific (e.g., "What is the NPV of renewable energy 
-                              investment with 10% discount rate over 10 years?")
-            deliverable_key: The shorthand name/key for this deliverable, from the state
+                              Should be clear and specific.
+            deliverable_key: The shorthand name/key for this deliverable, from the state.
                             This is the key that should be used when calling store_deliverable.
-            notes: Optional notes about the research task including helpful formulas and supplementary information.
-        
+            data_level: The level of data needed. Must be one of:
+                       - "aggregate" (overall metrics across a domain, use statistics)
+                       - "specific" (particular scenarios/cases with detailed parameters, use key_points)
+                       - "stated" (pre-analyzed results already reported in research)
+            data_source: Where to find the data. Should be:
+                        - "statistics" for aggregate-level data
+                        - "key_points" for specific-level detailed descriptions
+                        - "research_findings" for stated values
+            calculation_guidance: What formula/method to use and what types of inputs are needed.
+                                 Do NOT include actual numeric values - just describe the calculation approach.
+                                 Example: "Use compound growth formula with initial value and growth rate over 10 years"
+
         Returns:
             The compressed research findings from the specialized research agent.
         """
@@ -1376,7 +1387,7 @@ def create_deep_research_tool(researcher_subgraph):
         # Set recursion limit for researcher subgraph (increased to allow for research + store + finish)
         config["recursion_limit"] = 100
         
-        # Include deliverable_key in the message so the researcher knows which key to use
+        # Include deliverable_key and structured guidance in the message
         message_content = f"""=== YOUR ASSIGNED DELIVERABLE KEY ===
 **DELIVERABLE_KEY: "{deliverable_key}"**
 You MUST use this exact key "{deliverable_key}" when calling store_deliverable with your final answer.
@@ -1384,7 +1395,9 @@ You MUST use this exact key "{deliverable_key}" when calling store_deliverable w
 
 Research Question: {research_question}
 
-Supplementary Notes: {notes or 'None provided'}"""
+Data Level: {data_level}
+Data Source: {data_source}
+Calculation Guidance: {calculation_guidance}"""
         
         result = await researcher_subgraph.ainvoke({
             "reseacher_messages": [

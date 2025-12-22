@@ -90,9 +90,9 @@ TEST_TASKS = [
             recall_questions="\n".join([
                 "1. What was the global installed capacity in gigawatts for renewable energy?",
                 "2. What is the global AI market size in billions of USD?",
-                "3. What was the calculated 10-year compound growth final value for renewable energy?",
+                "3. What is the 10-year compound growth final value for the renewable energy market?",
                 "4. What was the NPV calculated for the renewable energy cost-benefit analysis project with 10% discount rate?",
-                "5. What correlation coefficient was calculated between market size and growth rate across all domains?",
+                "5. What correlation coefficient between market size and growth rate is reported for renewable energy?",
                 "6. What is the ratio of renewable energy cost-benefit analysis NPV to artificial intelligence cost-benefit analysis NPV (both at 10% discount rate)?",
                 "7. What is the present value of year 5 benefits for the renewable energy cost-benefit analysis project at 10% discount rate?",
                 "8. What percentage of total market size across all domains does renewable energy represent?",
