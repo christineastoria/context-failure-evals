@@ -1,33 +1,25 @@
 """Test script for context distraction evaluation using LangSmith experiments."""
 
-from typing import Dict, Any, List
 from langsmith import aevaluate
-from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-
-load_dotenv()
-
-from context_distraction.agent import create_standard_agent
+from context_distraction.agent import agent
 from context_distraction.resources.test_tasks import TEST_TASKS
 from context_distraction.resources.validation_utils import extract_tool_calls_from_message
 from context_distraction.tests.setup_datasets import setup_datasets, build_reference_outputs
 from context_distraction.tests.evaluators import (
-    recall_accuracy_evaluator_agent,
+    recall_accuracy_evaluator,
     tool_call_completeness_evaluator,
     tool_call_efficiency_evaluator,
 )
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+load_dotenv()
 
-
-async def run_standard_agent(inputs: dict) -> dict:
+async def run_agent(inputs: dict) -> dict:
     """Run standard agent and extract trajectory using streaming."""
     query = inputs["query"]
     trajectory = []
     final_response = ""
     
-    # Create agent
-    agent = create_standard_agent(llm)
     
     # Stream to capture tool calls and final state
     final_state = {}
@@ -85,16 +77,11 @@ async def run_experiment(agent_type: str, dataset_name: str):
     Returns:
         The experiment result from LangSmith aevaluate
     """
-    if agent_type == "standard":
-        run_fn = run_standard_agent
-    else:
-        raise ValueError(f"Unknown agent_type: {agent_type}. Only 'standard' is supported.")
-
     return await aevaluate(
-        run_fn,
+        run_agent,
         data=dataset_name,
         evaluators=[
-            recall_accuracy_evaluator_agent,
+            recall_accuracy_evaluator,
             tool_call_completeness_evaluator,
             tool_call_efficiency_evaluator,
         ],
@@ -117,14 +104,14 @@ async def run_local_test(case_index=0):
     print(f"LOCAL TEST - {task['name']}", flush=True)
     # Run agent with streaming
     inputs = {"query": task["query"]}
-    outputs = await run_standard_agent(inputs)
+    outputs = await run_agent(inputs)
     
     # Run evaluators locally
     print(f"\n{'='*80}", flush=True)
     print("EVALUATION RESULTS", flush=True)
     print(f"{'='*80}\n", flush=True)
     
-    recall_result = recall_accuracy_evaluator_agent(inputs, outputs, reference_outputs)
+    recall_result = recall_accuracy_evaluator(inputs, outputs, reference_outputs)
     print(f"Recall Accuracy: {recall_result['score']:.2%}", flush=True)
     print(f"{recall_result['comment']}\n", flush=True)
     

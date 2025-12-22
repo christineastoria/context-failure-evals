@@ -30,7 +30,7 @@ load_dotenv()
 
 # State definitions (simplified - user will define these)
 # AgentState, SupervisorState, ResearcherState
-llm = ChatOpenAI(model="gpt-4o-mini")
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 
 researcher_tools_list = all_research_tools + [store_deliverable, finish]

@@ -31,56 +31,27 @@ def extract_answers_json_from_text(text: str) -> Dict[str, Any]:
     return {}
 
 
-def recall_accuracy_evaluator_agent(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Evaluate recall accuracy for standard agent - extracts JSON from final_response."""
+def recall_accuracy_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
+    """Evaluate recall accuracy - extracts JSON from final_response."""
     final_response = outputs.get("final_response", "")
     answers = extract_answers_json_from_text(final_response)
     expected_answers = reference_outputs.get("expected_answers", {})
-    
+
     comparisons = []
     correct_count = 0
-    
-    for i in range(1, len(expected_answers) + 1):
-        # Try both string and integer keys for expected_answers (test data uses integer keys)
-        expected = expected_answers.get(i) or expected_answers.get(str(i))
-        # Answers from JSON are typically string keys
-        actual_value = answers.get(str(i)) or answers.get(i)
-        is_correct = compare_values(actual_value, expected) if expected else False
-        if is_correct:
-            correct_count += 1
-        comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
-    
-    accuracy = correct_count / len(expected_answers) if expected_answers else 0.0
-    comment = f"{correct_count}/{len(expected_answers)} correct\n" + "\n".join(comparisons)
-    
-    return {
-        "key": "recall_accuracy",
-        "score": accuracy,
-        "comment": comment,
-    }
 
-
-def recall_accuracy_evaluator_graph(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Evaluate recall accuracy for graph agent - extracts JSON from final_report."""
-    final_report = outputs.get("final_response", "")
-    answers = extract_answers_json_from_text(final_report)
-    expected_answers = reference_outputs.get("expected_answers", {})
-    
-    comparisons = []
-    correct_count = 0
-    
     for i in range(1, len(expected_answers) + 1):
         # Try both string and integer keys
-        expected = expected_answers.get(str(i)) or expected_answers.get(i)
+        expected = expected_answers.get(i) or expected_answers.get(str(i))
         actual_value = answers.get(str(i)) or answers.get(i)
         is_correct = compare_values(actual_value, expected) if expected else False
         if is_correct:
             correct_count += 1
         comparisons.append(f"Q{i}: expected={expected}, actual={actual_value}, {'✓' if is_correct else '✗'}")
-    
+
     accuracy = correct_count / len(expected_answers) if expected_answers else 0.0
     comment = f"{correct_count}/{len(expected_answers)} correct\n" + "\n".join(comparisons)
-    
+
     return {
         "key": "recall_accuracy",
         "score": accuracy,

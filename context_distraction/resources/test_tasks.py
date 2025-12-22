@@ -7,8 +7,7 @@ different domains to ensure variety.
 """
 
 from context_distraction.resources.expected_calculations import (
-    get_primary_domain_base_fact,
-    get_secondary_domain_base_fact,
+    get_domain_base_fact,
     get_compound_growth_10yr,
     get_cba_npv_10pct,
     get_correlation_market_size_vs_growth,
@@ -101,8 +100,8 @@ TEST_TASKS = [
         ),
         "topics": topics_all,
         "recall_questions": [
-            f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_primary_domain_base_fact('renewable_energy')} GW)",
-            f"What is the global AI market size in billions of USD? (Expected: {get_secondary_domain_base_fact('artificial_intelligence')} billion)",
+            f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_domain_base_fact('renewable_energy')} GW)",
+            f"What is the global AI market size in billions of USD? (Expected: {get_domain_base_fact('artificial_intelligence')} billion)",
             f"What was the calculated 10-year compound growth final value for renewable energy? (Expected: {get_compound_growth_10yr('renewable_energy')})",
             f"What was the NPV calculated for renewable energy CBA with 10% discount rate? (Expected: {get_cba_npv_10pct('renewable_energy')})",
             f"What correlation coefficient was calculated between market size and growth rate across all domains? (Expected: {get_correlation_market_size_vs_growth('renewable_energy')})",
@@ -112,8 +111,8 @@ TEST_TASKS = [
             f"What is the weighted average of NPVs across all domains, weighted by investment amounts? (Expected: {calculate_weighted_avg_npv(topics_all)})",
         ],
         "expected_answers": {
-            1: str(get_primary_domain_base_fact('renewable_energy')),
-            2: str(get_secondary_domain_base_fact('artificial_intelligence')),
+            1: str(get_domain_base_fact('renewable_energy')),
+            2: str(get_domain_base_fact('artificial_intelligence')),
             3: str(get_compound_growth_10yr('renewable_energy')),
             4: str(get_cba_npv_10pct('renewable_energy')),
             5: str(get_correlation_market_size_vs_growth('renewable_energy')),
@@ -149,8 +148,8 @@ TEST_TASKS = [
         ),
         "topics": topics_all,
         "recall_questions": [
-            f"What was the battery cost per kWh for electric vehicles? (Expected: {get_primary_domain_base_fact('electric_vehicles')} $/kWh)",
-            f"What is the global biotechnology market size in billions of USD? (Expected: {get_secondary_domain_base_fact('biotechnology')} billion)",
+            f"What was the battery cost per kWh for electric vehicles? (Expected: {get_domain_base_fact('electric_vehicles')} $/kWh)",
+            f"What is the global biotechnology market size in billions of USD? (Expected: {get_domain_base_fact('biotechnology')} billion)",
             f"What was the calculated 10-year compound growth final value for electric vehicles? (Expected: {get_compound_growth_10yr('electric_vehicles')})",
             f"What was the NPV calculated for electric vehicles CBA with 10% discount rate? (Expected: {get_cba_npv_10pct('electric_vehicles')})",
             f"What was the investment priority ranking for electric vehicles among all domains based on weighted scores? (Expected: Rank {get_investment_priority_rank('electric_vehicles')})",
@@ -160,8 +159,8 @@ TEST_TASKS = [
             f"What is the growth multiple (compound_growth_10yr / market_size) for electric vehicles raised to the power of 2? (Expected: {calculate_growth_multiple_power('electric_vehicles')})",
         ],
         "expected_answers": {
-            1: str(get_primary_domain_base_fact('electric_vehicles')),
-            2: str(get_secondary_domain_base_fact('biotechnology')),
+            1: str(get_domain_base_fact('electric_vehicles')),
+            2: str(get_domain_base_fact('biotechnology')),
             3: str(get_compound_growth_10yr('electric_vehicles')),
             4: str(get_cba_npv_10pct('electric_vehicles')),
             5: str(get_investment_priority_rank('electric_vehicles')),
@@ -197,8 +196,8 @@ TEST_TASKS = [
         ),
         "topics": topics_all,
         "recall_questions": [
-            f"What was the number of qubits for quantum computing? (Expected: {get_primary_domain_base_fact('quantum_computing')} qubits)",
-            f"What is the global AI market size in billions of USD? (Expected: {get_secondary_domain_base_fact('artificial_intelligence')} billion)",
+            f"What was the number of qubits for quantum computing? (Expected: {get_domain_base_fact('quantum_computing')} qubits)",
+            f"What is the global AI market size in billions of USD? (Expected: {get_domain_base_fact('artificial_intelligence')} billion)",
             f"What was the calculated 10-year compound growth final value for quantum computing? (Expected: {get_compound_growth_10yr('quantum_computing')})",
             f"What was the NPV calculated for quantum computing CBA with 10% discount rate? (Expected: {get_cba_npv_10pct('quantum_computing')})",
             f"What was the risk-adjusted NPV for quantum computing? (Expected: {get_risk_adjusted_npv('quantum_computing')})",
@@ -208,8 +207,8 @@ TEST_TASKS = [
             f"What is the ratio of quantum computing NPV to artificial intelligence NPV (both at 10% discount)? (Expected: {calculate_npv_ratio('quantum_computing', 'artificial_intelligence')})",
         ],
         "expected_answers": {
-            1: str(get_primary_domain_base_fact('quantum_computing')),
-            2: str(get_secondary_domain_base_fact('artificial_intelligence')),
+            1: str(get_domain_base_fact('quantum_computing')),
+            2: str(get_domain_base_fact('artificial_intelligence')),
             3: str(get_compound_growth_10yr('quantum_computing')),
             4: str(get_cba_npv_10pct('quantum_computing')),
             5: str(get_risk_adjusted_npv('quantum_computing')),
@@ -245,8 +244,8 @@ TEST_TASKS = [
         ),
         "topics": topics_all,
         "recall_questions": [
-            f"What is the global biotechnology market size in billions of USD? (Expected: {get_primary_domain_base_fact('biotechnology')} billion)",
-            f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_secondary_domain_base_fact('renewable_energy')} GW)",
+            f"What is the global biotechnology market size in billions of USD? (Expected: {get_domain_base_fact('biotechnology')} billion)",
+            f"What was the global installed capacity in gigawatts for renewable energy? (Expected: {get_domain_base_fact('renewable_energy')} GW)",
             f"What was the calculated 10-year compound growth final value for biotechnology? (Expected: {get_compound_growth_10yr('biotechnology')})",
             f"What was the NPV calculated for biotechnology CBA with 10% discount rate? (Expected: {get_cba_npv_10pct('biotechnology')})",
             f"What was the weighted investment score calculated for biotechnology based on comparison across all domains? (Expected: {get_weighted_investment_score('biotechnology')})",
@@ -256,8 +255,8 @@ TEST_TASKS = [
             f"What is the growth multiple (compound_growth_10yr / market_size) for biotechnology raised to the power of 2? (Expected: {calculate_growth_multiple_power('biotechnology')})",
         ],
         "expected_answers": {
-            1: str(get_primary_domain_base_fact('biotechnology')),
-            2: str(get_secondary_domain_base_fact('renewable_energy')),
+            1: str(get_domain_base_fact('biotechnology')),
+            2: str(get_domain_base_fact('renewable_energy')),
             3: str(get_compound_growth_10yr('biotechnology')),
             4: str(get_cba_npv_10pct('biotechnology')),
             5: str(get_weighted_investment_score('biotechnology')),

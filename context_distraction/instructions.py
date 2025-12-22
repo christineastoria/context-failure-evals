@@ -192,7 +192,7 @@ When extracting numeric values from research data:
 
 **Key Principles:**
 - **Array indexing**: Year N = array index N-1 (0-indexed)
-- **Scope**: Only include relevant domains/entities
+- **Scope**: Only include relevant domains/entities. When your task involves "all domains" or calculations "across domains", actively gather data for ALL available domains
 
 </Tool Usage Guide>
 

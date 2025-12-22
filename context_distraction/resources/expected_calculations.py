@@ -214,20 +214,16 @@ EXPECTED_STRATEGIC_RANKING_DICT = {
 # ============================================================================
 
 # Q1-Q4: Base question helpers
-def get_primary_domain_base_fact(primary: str) -> float:
-    """Get primary domain base fact (capacity_gw, battery_cost_kwh, qubits, or market_size_billions)."""
-    if "capacity_gw" in BASE_FACTS.get(primary, {}):
-        return BASE_FACTS[primary]["capacity_gw"]
-    elif "battery_cost_kwh" in BASE_FACTS.get(primary, {}):
-        return BASE_FACTS[primary]["battery_cost_kwh"]
-    elif "qubits" in BASE_FACTS.get(primary, {}):
-        return BASE_FACTS[primary]["qubits"]
+def get_domain_base_fact(domain: str) -> float:
+    """Get domain's primary characteristic (capacity_gw, battery_cost_kwh, qubits, or market_size_billions)."""
+    if "capacity_gw" in BASE_FACTS.get(domain, {}):
+        return BASE_FACTS[domain]["capacity_gw"]
+    elif "battery_cost_kwh" in BASE_FACTS.get(domain, {}):
+        return BASE_FACTS[domain]["battery_cost_kwh"]
+    elif "qubits" in BASE_FACTS.get(domain, {}):
+        return BASE_FACTS[domain]["qubits"]
     else:
-        return BASE_FACTS[primary]["market_size_billions"]
-
-def get_secondary_domain_base_fact(secondary: str) -> float:
-    """Get secondary domain base fact (market_size_billions or capacity_gw)."""
-    return BASE_FACTS[secondary].get("market_size_billions") or BASE_FACTS[secondary].get("capacity_gw")
+        return BASE_FACTS[domain]["market_size_billions"]
 
 def get_compound_growth_10yr(primary: str) -> float:
     """Get 10-year compound growth value."""

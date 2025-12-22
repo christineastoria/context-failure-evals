@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-.venv
-.env
-.env.*.local
-
-
-.ipynb_checkpoints
-*.egg-info
-__pycache__
-=======
 # Python
 __pycache__/
 *.py[cod]
@@ -31,8 +21,9 @@ wheels/
 *.egg
 
 # Virtual environments
-.env
 .venv
+.env
+.env.*.local
 env/
 venv/
 ENV/
@@ -53,6 +44,7 @@ venv.bak/
 *.swp
 *.swo
 *~
+.claude
 
 # OS
 .DS_Store
@@ -64,4 +56,3 @@ Thumbs.db
 # LangSmith
 evaluation_config__*.json
 
->>>>>>> 08e80f4 (improved score from consolidation)

@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 
 from context_distraction.graph import graph
 from context_distraction.resources.test_tasks import TEST_TASKS
-from context_distraction.resources.validation_utils import extract_answers_json, extract_tool_calls_from_message
+from context_distraction.resources.validation_utils import extract_tool_calls_from_message
 from context_distraction.tests.setup_datasets import setup_datasets, build_reference_outputs
 from context_distraction.tests.evaluators import (
-    recall_accuracy_evaluator_graph,
+    recall_accuracy_evaluator,
     tool_call_completeness_evaluator,
     tool_call_efficiency_evaluator,
 )
@@ -50,7 +50,6 @@ async def run_graph_agent(inputs: dict) -> dict:
         if isinstance(data, dict):
             for node_key, node_data in data.items():
                 if isinstance(node_data, dict):
-                    # Check for messages in common message keys
                     for msg_key in ['supervisor_messages', 'reseacher_messages', 'messages']:
                         if msg_key in node_data and isinstance(node_data[msg_key], list):
                             msgs = node_data[msg_key]
@@ -92,7 +91,7 @@ async def run_experiment(dataset_name: str):
         run_graph_agent,
         data=dataset_name,
         evaluators=[
-            recall_accuracy_evaluator_graph,
+            recall_accuracy_evaluator,
             tool_call_completeness_evaluator,
             tool_call_efficiency_evaluator,
         ],
@@ -123,7 +122,7 @@ async def run_local_test(case_index=0):
     print("EVALUATION RESULTS", flush=True)
     print(f"{'='*80}\n", flush=True)
     
-    recall_result = recall_accuracy_evaluator_graph(inputs, outputs, reference_outputs)
+    recall_result = recall_accuracy_evaluator(inputs, outputs, reference_outputs)
     print(f"Recall Accuracy: {recall_result['score']:.2%}", flush=True)
     print(f"{recall_result['comment']}\n", flush=True)
     
