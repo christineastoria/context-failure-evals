@@ -102,15 +102,17 @@ async def run_experiment(dataset_name: str):
     )
 
 
-async def run_local_test():
+async def run_local_test(case_index=0):
     """
     Run a local test with streaming output for debugging.
-    Always uses test case 1 (index 0).
+
+    Args:
+        case_index: Index of test case to run (0-3 for tasks 1-4)
     """
-    task = TEST_TASKS[0]  # Always use test case 1
+    task = TEST_TASKS[case_index]
     reference_outputs = build_reference_outputs(task)
-    
-    print("LOCAL TEST - Task 1", flush=True)
+
+    print(f"LOCAL TEST - {task['name']}", flush=True)
     
     # Run agent with streaming
     inputs = {"query": task["query"]}
@@ -143,19 +145,29 @@ async def run_local_test():
 
 if __name__ == "__main__":
     import asyncio
-    import sys
-    
-    # Check if running in local mode (no arguments = local test)
-    if len(sys.argv) > 1 and sys.argv[1] == "--langsmith":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Test graph-based research agent")
+    parser.add_argument("--langsmith", action="store_true", help="Run evaluation on LangSmith")
+    parser.add_argument("--dataset", default="context-distraction-research-slim", help="LangSmith dataset name")
+    parser.add_argument("--case", type=int, default=1, help="Test case number (1-4) for local testing")
+
+    args = parser.parse_args()
+
+    if args.langsmith:
         # Run LangSmith evaluation
         full_dataset_name = "context-distraction-research"
         slim_dataset_name = "context-distraction-research-slim"
         setup_datasets(full_dataset_name, slim_dataset_name, TEST_TASKS)
-        
-        dataset_name = sys.argv[2] if len(sys.argv) > 2 else slim_dataset_name
-        graph_experiment = asyncio.run(run_experiment(dataset_name))
+
+        graph_experiment = asyncio.run(run_experiment(args.dataset))
         print(f"\nGraph experiment completed: {graph_experiment}")
     else:
-        # Run local test with streaming (always uses test case 1)
-        asyncio.run(run_local_test())
+        # Run local test with streaming
+        case_index = args.case - 1  # Convert 1-based to 0-based index
+        if case_index < 0 or case_index >= len(TEST_TASKS):
+            print(f"Error: Case {args.case} out of range. Valid cases: 1-{len(TEST_TASKS)}")
+            exit(1)
+
+        asyncio.run(run_local_test(case_index))
 
