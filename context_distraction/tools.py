@@ -1386,7 +1386,9 @@ def create_deep_research_tool(researcher_subgraph):
         # Get config from runtime if available, otherwise use empty config
         config = runtime.config if runtime else {}
         # Set recursion limit for researcher subgraph (increased to allow for research + store + finish)
-        config["recursion_limit"] = 100
+        # Only set if not already set to allow parent config to take precedence
+        if "recursion_limit" not in config:
+            config["recursion_limit"] = 150
         
         # Include deliverable_key and structured guidance in the message
         message_content = f"""=== YOUR ASSIGNED DELIVERABLE KEY ===

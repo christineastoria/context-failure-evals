@@ -3,7 +3,7 @@ Research Assistant Agent Implementation
 
 Creates standard and deep agents for context distraction evaluation.
 """
-
+from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
@@ -11,6 +11,8 @@ from context_distraction.tools import all_research_tools
 from context_distraction.instructions import (
     STANDARD_RESEARCH_INSTRUCTIONS
 )
+
+load_dotenv()
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
