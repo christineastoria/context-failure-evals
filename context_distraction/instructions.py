@@ -147,12 +147,13 @@ You have access to these main tools:
 - "specific" - Individual case/scenario requiring multiple detailed parameters → use "key_points"
   * Input data: Detailed parameters from narratives (often multiple values per case)
   * If the question requires extracting several related values from a case description, use specific
-  * Signal: Questions about "a project", "the scenario", or financial analysis of individual cases
+  * Signal: Questions about "a project", "the scenario", or analysis of individual cases
 - "stated" - Simple fact lookup or pre-analyzed result → use "research_findings"
   * Researcher should extract directly, not recalculate
 
 **Fill calculation_guidance:**
-- Describe formula/method and WHERE to find inputs (e.g., "Use compound growth formula with values from specific case parameters")
+- Clearly convey what the question is asking for (preserve key terms from the research question)
+- Describe formula/method and WHERE to find inputs (e.g., "Apply compound growth formula with values from specific case parameters")
 - Connect related questions (e.g., "from same scenario data as Q4")
 - Mention input types needed (e.g., "initial value and growth rate")
 - **Do NOT include actual numeric values** (e.g., don't say "growth rate is 8%")
