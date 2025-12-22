@@ -86,7 +86,7 @@ async def run_experiment(agent_type: str, dataset_name: str):
         The experiment result from LangSmith aevaluate
     """
     if agent_type == "standard":
-        run_fn = lambda inputs: run_standard_agent(inputs, stream_output=False)
+        run_fn = run_standard_agent
     else:
         raise ValueError(f"Unknown agent_type: {agent_type}. Only 'standard' is supported.")
 

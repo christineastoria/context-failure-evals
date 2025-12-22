@@ -89,7 +89,7 @@ async def run_experiment(dataset_name: str):
         The experiment result from LangSmith aevaluate
     """
     return await aevaluate(
-        lambda inputs: run_graph_agent(inputs),
+        run_graph_agent,
         data=dataset_name,
         evaluators=[
             recall_accuracy_evaluator_graph,

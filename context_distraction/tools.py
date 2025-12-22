@@ -1350,8 +1350,9 @@ def create_deep_research_tool(researcher_subgraph):
         data_level: str,
         data_source: str,
         calculation_guidance: str,
+        tool_call_id: Annotated[str, InjectedToolCallId],
         runtime: ToolRuntime = None  # ToolRuntime parameter is not visible to the model
-    ) -> str:
+    ) -> Command:
         """
         Delegate research tasks to a specialized research agent for resolving a key deliverable.
 
@@ -1400,31 +1401,28 @@ Data Source: {data_source}
 Calculation Guidance: {calculation_guidance}"""
         
         result = await researcher_subgraph.ainvoke({
-            "reseacher_messages": [
-                HumanMessage(content=message_content)
-            ],
+            "reseacher_messages": [HumanMessage(content=message_content)],
             "research_question": research_question,
-            "deliverable_key": deliverable_key
+            "deliverable_key": deliverable_key,
+            "data_level": data_level,
+            "data_source": data_source,
+            "calculation_guidance": calculation_guidance
         }, config)
-        
-        # Extract findings from finish tool result or use finding from state
-        finding = result.get("finding")
-        if finding:
-            return finding
-        
-        # Check messages for finish tool result
-        messages = result.get("reseacher_messages", [])
-        for msg in reversed(messages):
-            if isinstance(msg, ToolMessage) and hasattr(msg, 'content'):
-                try:
-                    import json
-                    content = json.loads(msg.content) if isinstance(msg.content, str) else msg.content
-                    if isinstance(content, dict) and "findings" in content:
-                        return content.get("findings", "Research completed.")
-                except:
-                    pass
-        
-        return "Research completed."
+
+        # Extract deliverable value and findings from researcher result
+        deliverable_value = result.get("deliverables", {}).get(deliverable_key, "To be determined")
+        finding = result.get("finding", "Research completed.")
+
+        # Update supervisor deliverables - pass key-value pair, let reducer merge
+        return Command(
+            update={
+                "deliverables": {deliverable_key: deliverable_value},
+                "supervisor_messages": [ToolMessage(
+                    content=finding,
+                    tool_call_id=tool_call_id
+                )]
+            }
+        )
     
     return deep_research
 
@@ -1454,35 +1452,25 @@ def think_tool(
 
 @tool
 def store_deliverable(
-    deliverable_key: str, 
-    value: str, 
+    deliverable_key: str,
+    value: str,
     tool_call_id: Annotated[str, InjectedToolCallId],
     runtime: ToolRuntime = None  # ToolRuntime parameter is not visible to the model
 ) -> Command:
     """
     Store a deliverable value in the state.
-    
+
     Args:
         deliverable_key: The key for the deliverable (e.g., "Q1", "Q2", "renewable_energy_npv")
         value: The value for the deliverable (can be a number, text, or structured data)
-    
+
     Returns:
         Command that updates the deliverables state.
     """
-    # Get current deliverables from state
-    current_deliverables = runtime.state.get("deliverables", {}) if runtime else {}
-    
-    # Update deliverables with the new value
-    updated_deliverables = {
-        **current_deliverables,
-        deliverable_key: value
-    }
-    
-    # Return Command to update state with deliverables using override pattern
-    # Must include ToolMessage when returning Command
+    # Return Command to update state - pass key-value pair, let reducer merge
     return Command(
         update={
-            "deliverables": {"type": "override", "value": updated_deliverables},
+            "deliverables": {deliverable_key: value},
             "reseacher_messages": [ToolMessage(
                 content=f"Deliverable '{deliverable_key}' stored successfully.",
                 tool_call_id=tool_call_id

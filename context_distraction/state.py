@@ -18,11 +18,14 @@ def override_reducer(current_value, new_value):
         
 class ResearcherState(TypedDict):
     """Model for researcher state."""
-    research_question: str 
+    research_question: str
     reseacher_messages: Annotated[list[MessageLikeRepresentation], override_reducer]
     deliverables: Annotated[Dict[str, str], override_reducer] = {}
     deliverable_key: Optional[str]  # The shorthand name of the deliverable this researcher should store
     finding: Optional[str]
+    data_level: Optional[str]  # Level of data needed: aggregate, specific, or stated
+    data_source: Optional[str]  # Where to find data: statistics, key_points, or research_findings
+    calculation_guidance: Optional[str]  # Formula/method guidance for calculations
 
 class SupervisorState(TypedDict):
     """State for the supervisor that manages research tasks."""
@@ -40,5 +43,5 @@ class ResearchPlan(BaseModel):
         description="A high level plan of approach for answering the user's query.",
     )
     key_deliverables: List[str] = Field(
-        description="A list of key deliverables. Each deliverable should be a short phrase that captures the key metric or information that must be included.",
+        description="A list of key deliverables. Each deliverable MUST be a short phrase (3-6 words) that captures the key metric or information that must be included.",
     )
