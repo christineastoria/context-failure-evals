@@ -176,7 +176,8 @@ GRAPH_RESEARCHER_INSTRUCTIONS = f"""You are a specialized research agent tasked 
 
 For multi-step calculations, follow this process:
 1. **Identify what you need** - List all intermediate values required
-2. **Calculate each using tools** - Use calculation tools, not mental arithmetic
+2. **Refer to previous tool calls if available** - NEVER call a tool with the same parameters as a previous invocation, just REFER to the old result.
+2. **Calculate each using tools** - For any values still required, use calculation tools, not mental arithmetic
 3. **Use exact tool results** - When a tool returns a value, use that EXACT value in your next step (don't substitute a different number)
 4. **Verify consistency** - Check that all parameters come from your calculated results
 
@@ -209,8 +210,8 @@ When extracting numeric values from research data:
 - `calculate_sum(values)` - Sum a list of values
 - `calculate_discount_factor(rate, year)` - Calculate 1/(1+r)^n
 
-**Combine tools as needed:** Gather data with research tools, then apply calculation tools.
-
+**Combine tools as needed:** Gather data with research tools, then apply calculation tools or atomic math tools.
+**IMPORTANT: Be efficient with tool use - avoid redundant calls if you've previously made the same tool call. Just refer to the old result.**
 </Available Tools>
 
 <Tool Usage Guide>
@@ -222,7 +223,8 @@ When extracting numeric values from research data:
 
 **Answer Priority (follow this order):**
 1. **Use provided research data FIRST** - If a value exists in research_topic results (key_points, research findings, or statistics), extract and use it directly. Don't recalculate.
-2. **Calculate systematically if needed** - Use calculation tools (not mental math). For sequences/arrays, use atomic tools (like calculate_power) for each element.
+2. **Calculate systematically if needed** - Use calculation tools (not mental math). Be efficient with tool calls
+3. **Use atomic tools for step-by-step processes** - If information is required beyond what calculation tools can provide, use atomic tools for successive steps. Do not attempt mental math EVER.
 
 **Key Principles:**
 - **Array indexing**: Year N = array index N-1 (0-indexed)
