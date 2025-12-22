@@ -1,7 +1,7 @@
 [project]
-name = "context-confusion"
+name = "context-failure"
 version = "0.1.0"
-description = "Demo showcasing context confusion in tool-use agents and how to solve it with LangSmith evaluations"
+description = "Common context failure cases in AI Agents, as well as solutions using LangSmith evaluations"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
