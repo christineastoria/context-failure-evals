@@ -52,7 +52,7 @@ Research Principles:
 
 For multi-step calculations, follow this process:
 1. **Identify what you need** - List all intermediate values required
-2. **Calculate each using tools** - Use calculation tools, not mental arithmetic
+2. **Calculate each using tools** - Use calculation tools, not mental arithmetic. However, be efficient with your tool usage. Avoid redundant calls.
 3. **Use exact tool results** - When a tool returns a value, use that EXACT value in your next step (don't substitute a different number)
 4. **Verify consistency** - Check that all parameters come from your calculated results
 

@@ -111,35 +111,37 @@ def tool_call_completeness_evaluator(inputs: Dict[str, Any], outputs: Dict[str, 
 
 
 def tool_call_efficiency_evaluator(inputs: Dict[str, Any], outputs: Dict[str, Any], reference_outputs: Dict[str, Any]) -> Dict[str, Any]:
-    """Evaluate how many extra tool calls were made beyond the optimal trajectory."""
+    """Evaluate tool call efficiency as the ratio of expected to actual tool calls."""
     expected_trajectory = reference_outputs.get("expected_trajectory", [])
     actual_trajectory = outputs.get("trajectory", [])
-    
+
     expected_count = reference_outputs.get("expected_trajectory_count", len(expected_trajectory))
     actual_count = len(actual_trajectory)
-    
-    extra_calls = max(0, actual_count - expected_count)
-    
-    # Score: 1.0 if no extra calls, decreases as extra calls increase
-    # Penalty: -0.1 per extra call, minimum score of 0.0
-    if expected_count == 0:
-        score = 1.0 if actual_count == 0 else 0.0
+
+    # Score: expected / actual
+    # 1.0 = perfect efficiency (used exactly expected number)
+    # > 1.0 = better than expected (used fewer calls)
+    # < 1.0 = worse than expected (used more calls)
+    if actual_count == 0:
+        score = 1.0 if expected_count == 0 else 0.0
     else:
-        # Score starts at 1.0 and decreases by 0.05 per extra call
-        # So 1 extra call = 0.95, 2 extra = 0.90, etc.
-        score = max(0.0, 1.0 - (extra_calls * 0.05))
-    
+        score = expected_count / actual_count
+
+    extra_calls = max(0, actual_count - expected_count)
+
     comment_parts = [
         f"Expected: {expected_count} tool calls",
         f"Actual: {actual_count} tool calls",
-        f"Extra calls: {extra_calls}"
+        f"Efficiency ratio: {score:.3f}"
     ]
-    
+
     if extra_calls > 0:
-        comment_parts.append(f"Efficiency: Made {extra_calls} more tool call(s) than optimal")
+        comment_parts.append(f"Made {extra_calls} more tool call(s) than optimal")
+    elif actual_count < expected_count:
+        comment_parts.append(f"Used {expected_count - actual_count} fewer tool call(s) than expected")
     else:
-        comment_parts.append("Efficiency: Optimal (no extra calls)")
-    
+        comment_parts.append("Optimal (used exactly expected number of calls)")
+
     return {
         "key": "tool_call_efficiency",
         "score": score,
