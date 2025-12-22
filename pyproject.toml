@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Christina Astoria", email = "christina@example.com"}
+    {name = "Christine Astoria", email = "christine@langchain.dev"}, 
+    {name = "Robert Xu", email = "xuro@langchain.dev"}
 ]
 
 dependencies = [
