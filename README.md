@@ -29,8 +29,10 @@ context-failure-evals/
 │   ├── tools.py                          # 75 tools including near-duplicates
 │   ├── instructions.py                   # Base instructions
 │   ├── additional_context.py             # Irrelevant domain instructions
-│   ├── resources/                        # Mock data
-│   └── tests/                            # Evaluators and dataset utilities
+│   ├── resources/                        # Mock data and test cases
+│   ├── tests/                            # Evaluators and dataset utilities
+│   ├── utils/                            # Agent helpers and plotting utilities
+│   └── solutions/                        # Consolidated tools and solutions
 └── context_distraction/
     ├── agent.py                          # Standard ReAct agent
     ├── graph.py                          # Graph agent with context isolation
